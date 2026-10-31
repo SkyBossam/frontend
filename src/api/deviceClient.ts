@@ -46,8 +46,8 @@ export class DeviceClient {
     }
     return this.refreshing;
   }
-  async request<T>(method: string, path: string, body?: unknown, workspace?: string, key?: string, retry = true): Promise<T> {
-    const headers = new Headers({ Accept: 'application/json' });
+  async request<T>(method: string, path: string, body?: unknown, workspace?: string, key?: string, retry = true, format: 'json' | 'image' = 'json'): Promise<T> {
+    const headers = new Headers({ Accept: format === 'image' ? 'image/jpeg' : 'application/json' });
     if (body !== undefined) headers.set('Content-Type', 'application/json');
     const access = this.session?.accessToken;
     if (access) headers.set('Authorization', `Bearer ${access}`);
@@ -59,7 +59,12 @@ export class DeviceClient {
     if (response.status === 401 && retry && this.session && !path.startsWith('/auth/')) {
       // Another concurrent request may already have rotated the access token.
       if (access === this.session.accessToken) await this.refresh();
-      return this.request<T>(method, path, body, workspace, key, false);
+      return this.request<T>(method, path, body, workspace, key, false, format);
+    }
+    if (response.ok && format === 'image') {
+      if (response.status === 204) return null as T;
+      if (!response.headers.get('content-type')?.startsWith('image/jpeg')) throw new Error('카메라 응답이 올바른 영상 형식이 아니에요.');
+      return await response.blob() as T;
     }
     const data = await response.json().catch(() => null);
     if (!response.ok) {
@@ -87,5 +92,6 @@ export class DeviceClient {
   approve(workspace: string, childId: string, code: string, name: string, key: string) { return this.request('POST', '/device-pairings/approve', { code: normalizePairingCode(code), childId, name }, workspace, key); }
   unlink(workspace: string, device: string) { return this.request('DELETE', `/devices/${encodeURIComponent(device)}`, undefined, workspace); }
   skyEye(workspace: string, child: string) { return this.request<SkySnapshot>('GET', `/children/${encodeURIComponent(child)}/sky-eye`, undefined, workspace); }
+  cameraFrame(workspace: string, child: string, device: string) { return this.request<Blob | null>('GET', `/children/${encodeURIComponent(child)}/devices/${encodeURIComponent(device)}/camera/frame`, undefined, workspace, undefined, true, 'image'); }
   modelFeedback(workspace: string, child: string, deviceId: string, episodeUid: string, action: CareAction) { return this.request<{ id: string; status: string }>('POST', `/children/${encodeURIComponent(child)}/sky-eye/feedback`, { deviceId, episodeUid, action }, workspace); }
 }

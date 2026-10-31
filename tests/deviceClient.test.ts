@@ -3,6 +3,32 @@ import assert from 'node:assert/strict';
 import { ApiError, DeviceClient, normalizeApiBaseUrl, normalizePairingCode } from '../src/api/deviceClient.ts';
 const response = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
 
+test('camera frames use user authentication and workspace scope, including refresh', async context => {
+  let frames = 0;
+  context.mock.method(globalThis, 'fetch', async (url: string, init: RequestInit) => {
+    if (url.endsWith('/auth/login')) return response({ accessToken: 'old', refreshToken: 'r' });
+    if (url.endsWith('/auth/refresh')) return response({ accessToken: 'new', refreshToken: 'r2' });
+    const headers = new Headers(init.headers);
+    assert.equal(headers.get('X-Workspace-Id'), 'space-a');
+    assert.equal(headers.has('X-Device-Token'), false);
+    assert.equal(url, '/api/v1/children/child-a/devices/device-a/camera/frame');
+    assert.equal(headers.get('Accept'), 'image/jpeg');
+    if (++frames === 1) return response({}, 401);
+    assert.equal(headers.get('Authorization'), 'Bearer new');
+    return new Response(new Uint8Array([255,216,255,217]), { headers: { 'Content-Type': 'image/jpeg' } });
+  });
+  const client = new DeviceClient(); await client.authenticate('login', 'test@example.test', 'password');
+  const frame = await client.cameraFrame('space-a', 'child-a', 'device-a');
+  assert.equal(frame?.size, 4); assert.equal(frame?.type, 'image/jpeg');
+});
+test('missing/stale frames become empty and HTML cannot masquerade as a camera', async context => {
+  const fetch = context.mock.method(globalThis, 'fetch', async () => new Response(null, { status: 204 }));
+  const client = new DeviceClient();
+  assert.equal(await client.cameraFrame('space', 'child', 'device'), null);
+  fetch.mock.mockImplementation(async () => new Response('<html>login</html>', { headers: { 'Content-Type': 'text/html' } }));
+  await assert.rejects(client.cameraFrame('space', 'child', 'device'), /영상 형식/);
+});
+
 test('login accepts origin or API base without duplicating /api/v1', async context => {
   const urls: string[] = [];
   context.mock.method(globalThis, 'fetch', async (url: string) => { urls.push(url); return response({ accessToken: 'a', refreshToken: 'r' }); });

@@ -4,6 +4,9 @@ export interface ModelEvent { id: string; episodeKey: string; kind: string; risk
 export interface ModelEpisode { episodeUid: string; startedAt: string; endedAt: string; action: CareAction | null }
 export interface SkyDevice {
   deviceId: string; name: string; connected: boolean;
+  reportState?: 'awaiting_sender' | 'awaiting_model' | 'offline' | 'input_unavailable' | 'receiving';
+  lastReportAt?: string | null;
+  camera?: { available: boolean; capturedAt: string | null; width: number | null; height: number | null };
   status: {
     observedAt: string;
     video: { available: boolean; observedAt: string | null; posture: string | null; airway: string | null; state: string; geometryValid: boolean; fallState: string | null; fps: number | null };
@@ -19,6 +22,13 @@ export const careLabels: Record<CareAction, string> = { feed: '수유', diaper: 
 export const safetyLabels: Record<Safety, string> = { stable: '관측 정상', caution: '확인 필요', immediate: '즉시 확인', unknown: '확인 불가' };
 export const safetyTones = { stable: 'green', caution: 'yellow', immediate: 'red', unknown: 'gray' } as const;
 export const safetyItems = [{ key: 'posture', label: '아기 자세' }, { key: 'face', label: '얼굴 노출' }, { key: 'objects', label: '주변 물체' }, { key: 'edge', label: '가장자리 접근' }] as const;
+export function connectionLabel(device: Pick<SkyDevice, 'connected' | 'reportState'>) {
+  if (device.reportState === 'awaiting_sender') return '연결 승인됨 · 파이 실행 대기';
+  if (!device.connected) return '기기 응답이 멈췄어요';
+  if (device.reportState === 'awaiting_model') return '기기 연결됨 · 모델 전송 대기';
+  if (device.reportState === 'input_unavailable') return '기기 연결됨 · 분석 입력 확인 필요';
+  return '기기 데이터 수신 중';
+}
 export function eventLabel(event: ModelEvent) {
   const risk = ({ prone: '엎드림', face_covered: '얼굴 가림', edge_departure_warning: '가장자리 접근', cry: '울음 후보' } as Record<string, string>)[event.riskType || ''] || '관측';
   const kind = ({ risk_started: '위험 의심 감지', risk_ended: '모델 위험 구간 종료', risk_interrupted: '관찰 중단', status_changed: '상태 변경', posture_changed: '자세 변경', cry_started: '울음 후보 시작', cry_ended: '울음 후보 종료', cry_episode_started: '울음 구간 시작', cry_episode_ended: event.endReason === 'quiet' ? '울음 구간 종료' : '울음 관찰 중단' } as Record<string, string>)[event.kind] || event.kind;
@@ -36,6 +46,7 @@ export function currentSnapshot(snapshot: SkySnapshot | null, receivedAt: number
     const audio = exporter && item.status.audio.available && fresh(item.status.audio.observedAt, 6000);
     const personal = item.status.personalization;
     return { ...item, connected: item.connected && elapsed < 15000,
+      camera: item.camera ? { ...item.camera, available: item.camera.available && fresh(item.camera.capturedAt, 3000) && elapsed < 3000 } : undefined,
       safety: video ? item.safety : { posture: 'unknown', face: 'unknown', edge: 'unknown', objects: 'unknown' },
       status: { ...item.status, video: { ...item.status.video, available: video }, audio: { ...item.status.audio, available: audio, cryDetected: audio && item.status.audio.cryDetected }, personalization: audio && personal && !personal.simulation ? { ...personal, recommendations: personal.state === 'ready' && personal.nFeedback >= Math.max(10, personal.requiredFeedback) && personal.cryWindows >= Math.max(10, personal.requiredCryWindows) ? personal.recommendations : [] } : null },
       events: item.events.map(entry => ({ ...entry, recent: entry.recent && fresh(entry.event.observedAt, 30000) })),

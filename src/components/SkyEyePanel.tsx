@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Activity, ShieldCheck } from 'lucide-react';
 import { Badge, Button, EmptyState, Notice, SectionHeader } from '../components';
 import { useApp } from '../context';
-import { careLabels, eventLabel, safetyItems, safetyLabels, safetyTones, type CareAction, type ModelEpisode, type SkyDevice } from '../skyEye';
+import { careLabels, connectionLabel, eventLabel, safetyItems, safetyLabels, safetyTones, type CareAction, type ModelEpisode, type SkyDevice } from '../skyEye';
 
 const date = (value: string) => new Date(value).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
@@ -57,7 +57,7 @@ function ModelDetails({ device }: { device: SkyDevice }) {
   const posture = ({ supine: '바로 누움', side: '옆으로 누움', prone: '엎드림' } as Record<string, string>)[video.posture || ''] || '자세 미확인';
   const airway = ({ airway_visible: '코·입 보임', airway_covered: '코·입 가림 의심' } as Record<string, string>)[video.airway || ''] || '얼굴 미확인';
   return <section className="card model-card"><SectionHeader title={device.name} icon={<Activity size={19}/>}/>
-    <div className="model-status-row"><Badge tone={device.connected ? 'green' : 'gray'}>{device.connected ? '분석 기기 연결됨' : '기기 연결 확인 불가'}</Badge><span>최근 전송 {date(device.status.observedAt)}</span></div>
+    <div className="model-status-row"><Badge tone={device.connected ? 'green' : 'gray'}>{connectionLabel(device)}</Badge><span>{device.lastReportAt === null ? '아직 수신한 분석 데이터가 없어요' : `최근 전송 ${date(device.lastReportAt || device.status.observedAt)}`}</span></div>
     <div className="model-observations"><div><strong>자세·얼굴 관측</strong><p>{video.available ? `${posture} · ${airway}` : '현재 입력을 확인할 수 없어요'}</p><small>모델 관측이며, 안전 여부는 아이를 직접 확인해 주세요.</small></div>
       <div><strong>울음 관측</strong><p>{audio.available ? audio.cryDetected ? '울음 후보가 감지됐어요' : '현재 울음 후보 없음' : '마이크 입력 확인 불가'}</p>{audio.available && audio.babyCryScore !== null && <small>아기 울음 모델 점수 {audio.babyCryScore.toFixed(2)} · 확률이나 정확도가 아니에요</small>}</div></div>
     <div className="model-personalization"><h3>{p ? stateLabels[p.state] || '돌봄 힌트 준비 중' : '돌봄 힌트 확인 불가'}</h3>{p ? <><p>보호자 기록 {p.nFeedback}/{p.requiredFeedback}건 · 현재 울음 {p.cryWindows}/{p.requiredCryWindows}창</p>
