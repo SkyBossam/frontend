@@ -6,6 +6,7 @@ import { Brand, Button, Cloud, EmptyState, IconButton, NotificationBell, Profile
 import { updateAlert } from './domain';
 import './styles.css';
 import { pages } from './pageRegistry';
+import { Devices } from './pages/Devices';
 import type { ComponentType } from 'react';
 function Unavailable(_props: {
     onAlert?: () => void;
@@ -26,6 +27,7 @@ function App() {
         setAlertOpen(true);
     } }, [path]);
     useEffect(() => { document.title = (path === '/home' ? '오늘의 돌봄' : path.startsWith('/children') ? '우리 아이' : path === '/monitor' ? '모니터링' : '우리 아이의 편안한 하루') + ' · 아이쿠'; }, [path]);
+    if (path === '/devices') return <Devices />;
     if (path === '/signup' || path === '/login')
         return <Auth key={path}/>;
     if (path === '/onboarding/child' && account)

@@ -32,7 +32,7 @@ export function AppProvider({ children }: {
     const toast = (text: string) => { setMessage(text); if (toastTimer.current)
         clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setMessage(''), 4500); };
     useEffect(() => { const pop = () => setPath(window.location.pathname); const network = () => setOnline(navigator.onLine); window.addEventListener('popstate', pop); window.addEventListener('online', network); window.addEventListener('offline', network); return () => { window.removeEventListener('popstate', pop); window.removeEventListener('online', network); window.removeEventListener('offline', network); }; }, []);
-    useEffect(() => { const auth = ['/welcome', '/signup', '/login']; if (!account && !auth.includes(path))
+    useEffect(() => { if (path === '/devices') return; const auth = ['/welcome', '/signup', '/login']; if (!account && !auth.includes(path))
         go('/welcome');
     else if (account && (!data.child) && !['/onboarding/child', '/signup', '/login'].includes(path))
         go('/onboarding/child');
