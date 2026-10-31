@@ -11,12 +11,14 @@ export interface Child {
 }
 export interface Routine {
     id: string;
+    version?: number;
     childId: string;
     title: string;
     type: RoutineType;
     date: string;
     time: string;
     endTime?: string;
+    endDate?: string;
     note?: string;
     status: 'todo' | 'in_progress' | 'done';
 }
@@ -61,6 +63,7 @@ export interface AlertEvent {
 }
 export interface SleepRecord {
     id: string;
+    version?: number;
     childId: string;
     startedAt: string;
     endedAt: string;

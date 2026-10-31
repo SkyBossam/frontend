@@ -1,4 +1,5 @@
 import type { CareAction, SkySnapshot } from '../skyEye';
+import type { CareChanges, HistoryKind, SavedCare } from '../careHistory';
 export interface Session { accessToken: string; refreshToken: string; userId?: string; emailVerified?: boolean; verificationToken?: string }
 export interface Workspace { id: string; name: string; role: string; type: string }
 export interface Child { id: string; displayName: string; birthDate: string; capabilities: string[] }
@@ -25,6 +26,9 @@ const messages: Record<string, string> = {
   DEVICE_ALREADY_PAIRED: '이미 연결된 파이예요. 기존 보호자가 연결을 해제해야 해요.',
   PAIRING_RATE_LIMITED: '확인 요청이 많아요. 15분 뒤 다시 시도해 주세요.',
   EMAIL_VERIFICATION_REQUIRED: '이메일 인증을 먼저 완료해 주세요.',
+  CARE_RECORD_CHANGED: '다른 화면에서 기록이 변경됐어요. 최신 기록을 불러온 뒤 다시 열어 주세요.',
+  FEEDBACK_ALREADY_RECORDED: '이미 대응 결과가 저장됐어요. 최신 기록을 확인해 주세요.',
+  INVALID_SLEEP_TIME: '수면 종료는 시작 이후여야 하고, 미래 시간은 기록할 수 없어요. 최대 7일 범위로 입력해 주세요.',
 };
 /** Account credentials live only in memory. Device credentials never reach this client. */
 export class DeviceClient {
@@ -47,6 +51,7 @@ export class DeviceClient {
     return this.refreshing;
   }
   async request<T>(method: string, path: string, body?: unknown, workspace?: string, key?: string, retry = true, format: 'json' | 'image' = 'json'): Promise<T> {
+    const generation = this.generation;
     const headers = new Headers({ Accept: format === 'image' ? 'image/jpeg' : 'application/json' });
     if (body !== undefined) headers.set('Content-Type', 'application/json');
     const access = this.session?.accessToken;
@@ -56,6 +61,7 @@ export class DeviceClient {
     let response: Response;
     try { response = await fetch(`${this.baseUrl}/api/v1${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body), cache: 'no-store', credentials: 'omit', redirect: 'error', signal: AbortSignal.timeout(15000) }); }
     catch { throw new Error('서버에 연결하지 못했어요. 네트워크와 아이쿠 서버 주소를 확인해 주세요.'); }
+    if (generation !== this.generation) throw new ApiError(401, 'SESSION_CHANGED', '로그인 계정이 변경됐어요.');
     if (response.status === 401 && retry && this.session && !path.startsWith('/auth/')) {
       // Another concurrent request may already have rotated the access token.
       if (access === this.session.accessToken) await this.refresh();
@@ -67,6 +73,7 @@ export class DeviceClient {
       return await response.blob() as T;
     }
     const data = await response.json().catch(() => null);
+    if (generation !== this.generation) throw new ApiError(401, 'SESSION_CHANGED', '로그인 계정이 변경됐어요.');
     if (!response.ok) {
       if (response.status === 401 && !path.startsWith('/auth/') && this.session) { this.clear(); this.onSessionExpired?.(); }
       if (response.status === 404 && path.startsWith('/auth/')) throw new ApiError(404, 'API_ROUTE_NOT_FOUND', '로그인 서버를 찾지 못했어요. 서버 연결 주소와 배포 설정을 확인해 주세요.');
@@ -94,4 +101,11 @@ export class DeviceClient {
   skyEye(workspace: string, child: string) { return this.request<SkySnapshot>('GET', `/children/${encodeURIComponent(child)}/sky-eye`, undefined, workspace); }
   cameraFrame(workspace: string, child: string, device: string) { return this.request<Blob | null>('GET', `/children/${encodeURIComponent(child)}/devices/${encodeURIComponent(device)}/camera/frame`, undefined, workspace, undefined, true, 'image'); }
   modelFeedback(workspace: string, child: string, deviceId: string, episodeUid: string, action: CareAction) { return this.request<{ id: string; status: string }>('POST', `/children/${encodeURIComponent(child)}/sky-eye/feedback`, { deviceId, episodeUid, action }, workspace); }
+  careHistory<T>(workspace: string, child: string, kind: HistoryKind, cursor: string | null = null) {
+    const query = new URLSearchParams({ kind, limit: '100' }); if (cursor) query.set('cursor', cursor);
+    return this.request<{ items: T[]; nextCursor: string | null }>('GET', `/children/${encodeURIComponent(child)}/care-history?${query}`, undefined, workspace);
+  }
+  saveCareHistory(workspace: string, child: string, changes: CareChanges, key: string) {
+    return this.request<SavedCare>('PUT', `/children/${encodeURIComponent(child)}/care-history`, changes, workspace, key);
+  }
 }

@@ -21,9 +21,8 @@ export function readData(account: string | null): AppData { if (!account)
 catch {
     return emptyData();
 } }
-/** Mock persistence adapter. Replace this boundary with the API in docs/data-contracts.md. */
+/** Device-local cache and demo storage. Authenticated care records are saved by the API first. */
 export async function persistData(account: string, data: AppData): Promise<AppData> {
-    await new Promise(resolve => setTimeout(resolve, 180));
     try {
         localStorage.setItem(prefix + account, JSON.stringify(data));
         return data;
@@ -31,4 +30,8 @@ export async function persistData(account: string, data: AppData): Promise<AppDa
     catch {
         throw new Error('기록을 저장하지 못했어요. 브라우저 저장 공간과 접근 권한을 확인한 뒤 다시 시도해 주세요.');
     }
+}
+export function backupLegacyRecords(account: string, data: AppData) {
+    const key = prefix + 'records-backup:' + account + ':' + data.child?.id;
+    if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify(data));
 }

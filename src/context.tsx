@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { demoData, emptyData, type AppData, type Child } from './domain';
-import { getSession, persistData, readData, setSession } from './store';
-import { DeviceClient, type Child as ServerChild } from './api/deviceClient';
+import { backupLegacyRecords, getSession, persistData, readData, setSession } from './store';
+import { ApiError, DeviceClient, type Child as ServerChild } from './api/deviceClient';
+import { applySavedCare, careChanges, hasCareChanges, legacyCareChanges, loadCareRecords } from './careHistory';
 import { authContinuation, deviceLoginRoute, homeRoute, previewAccount, routeRedirect, withServerChild } from './sessionFlow';
 import { useSkyEye } from './useSkyEye';
 
@@ -20,6 +21,7 @@ interface Context {
   saveChild: (child: Child) => Promise<boolean>;
   selectServerChild: (workspace: string, child: ServerChild) => Promise<void>;
   sky: ReturnType<typeof useSkyEye>;
+  recordsLoading: boolean; recordsError: string; refreshRecords: () => Promise<void>;
 }
 const AppContext = createContext<Context>(null!);
 export const useApp = () => useContext(AppContext);
@@ -38,6 +40,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [message, setMessage] = useState(''), toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [online, setOnline] = useState(navigator.onLine);
   const createChildRequest = useRef<{ body: string; key: string } | null>(null);
+  const careRequest = useRef<{ body: string; key: string } | null>(null);
+  const recordsRequest = useRef(0), recordsPending = useRef(false), recordsReady = useRef(false);
+  const [recordsLoading, setRecordsLoading] = useState(false), [recordsError, setRecordsError] = useState('');
+  const childId = data.child?.id || '';
   const go = useCallback((next: string, replace = false) => {
     const url = new URL(next, window.location.href);
     if (url.origin !== window.location.origin) return;
@@ -46,6 +52,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
   const toast = useCallback((text: string) => { setMessage(text); if (toastTimer.current) clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setMessage(''), 4500); }, []);
   function resetAccount() {
+    recordsRequest.current++; recordsReady.current = false; recordsPending.current = false; careRequest.current = null;
+    setRecordsLoading(false); setRecordsError('');
     api.clear(); setAuthenticated(false); setEmailVerified(false); setVerificationToken(''); setWorkspaceId('');
     setAccount(null); storageAccount.current = null; createChildRequest.current = null;
     dataRef.current = emptyData(); setData(dataRef.current);
@@ -71,14 +79,71 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   async function store(next: AppData) {
     if (!storageAccount.current) throw new Error('로그인이 필요해요.');
-    await persistData(storageAccount.current, next); dataRef.current = next; setData(next);
+    if (authenticated) {
+      dataRef.current = next; setData(next);
+      await persistData(storageAccount.current, next).catch(() => toast('서버에는 저장됐지만 브라우저에 사본을 보관하지 못했어요.'));
+    } else { await persistData(storageAccount.current, next); dataRef.current = next; setData(next); }
   }
+  const refreshRecords = useCallback(async () => {
+    if (!authenticated || !childId || locked.current || recordsPending.current) return;
+    const request = ++recordsRequest.current, cacheAccount = storageAccount.current;
+    const current = () => request === recordsRequest.current && storageAccount.current === cacheAccount && dataRef.current.child?.id === childId;
+    recordsPending.current = true; setRecordsLoading(true);
+    try {
+      let records = await loadCareRecords(api, workspaceId, childId, current);
+      if (!current()) return;
+      if (!recordsReady.current) {
+        if (cacheAccount && [...dataRef.current.routines, ...dataRef.current.sleepRecords].some(r => r.version === undefined)) backupLegacyRecords(cacheAccount, dataRef.current);
+        const legacy = legacyCareChanges(dataRef.current, records);
+        if (hasCareChanges(legacy) && cacheAccount) {
+          // Back up pre-DB records before importing. Demo IDs and another child's records are excluded.
+          while (legacy.routines.length || legacy.sleepRecords.length) {
+            if (!current()) return;
+            await api.saveCareHistory(workspaceId, childId, { ...legacy, routines: legacy.routines.splice(0, 50), sleepRecords: legacy.sleepRecords.splice(0, 50) }, crypto.randomUUID());
+          }
+          records = await loadCareRecords(api, workspaceId, childId, current);
+        }
+      }
+      if (!current()) return;
+      const next = { ...dataRef.current, ...records };
+      recordsReady.current = true; dataRef.current = next; setData(next); setRecordsError('');
+      if (cacheAccount) await persistData(cacheAccount, next).catch(() => {});
+    } catch (error) { if (current()) setRecordsError(error instanceof Error ? error.message : '기록을 불러오지 못했어요.'); }
+    finally { if (request === recordsRequest.current) { recordsPending.current = false; setRecordsLoading(false); } }
+  }, [api, authenticated, workspaceId, childId]);
+  useEffect(() => {
+    recordsRequest.current++; recordsPending.current = false; recordsReady.current = false; setRecordsError(''); setRecordsLoading(false);
+    if (!authenticated || !childId) return;
+    // Login/child setup releases its write lock before the effect's first request.
+    const first = setTimeout(() => void refreshRecords(), 0);
+    const interval = setInterval(() => { if (!document.hidden) void refreshRecords(); }, 20000);
+    const resume = () => { if (!document.hidden) void refreshRecords(); };
+    window.addEventListener('online', resume); document.addEventListener('visibilitychange', resume);
+    return () => { recordsRequest.current++; recordsPending.current = false; clearTimeout(first); clearInterval(interval); window.removeEventListener('online', resume); document.removeEventListener('visibilitychange', resume); };
+  }, [authenticated, childId, workspaceId, refreshRecords]);
   const commit = async (change: Change) => {
     if (locked.current || !account) return false;
     locked.current = true; setBusy(true);
-    try { await store(typeof change === 'function' ? change(dataRef.current) : change); return true; }
-    catch (error) { toast(error instanceof Error ? error.message : '저장하지 못했어요.'); return false; }
-    finally { locked.current = false; setBusy(false); }
+    const cacheAccount = storageAccount.current, selected = dataRef.current.child?.id;
+    let conflict = false;
+    try {
+      let next = typeof change === 'function' ? change(dataRef.current) : change;
+      if (authenticated && selected) {
+        const changes = careChanges(dataRef.current, next);
+        if (hasCareChanges(changes)) {
+          if (!recordsReady.current) throw new Error('서버 기록을 먼저 불러와 주세요. 화면 위의 다시 불러오기를 눌러 주세요.');
+          recordsRequest.current++; recordsPending.current = false; setRecordsLoading(false);
+          const body = JSON.stringify([workspaceId, selected, changes]);
+          if (careRequest.current?.body !== body) careRequest.current = { body, key: crypto.randomUUID() };
+          const saved = await api.saveCareHistory(workspaceId, selected, changes, careRequest.current.key);
+          if (cacheAccount !== storageAccount.current || selected !== dataRef.current.child?.id) return false;
+          next = applySavedCare(next, saved); careRequest.current = null; setRecordsError('');
+        }
+      }
+      await store(next); return true;
+    }
+    catch (error) { conflict = error instanceof ApiError && error.status === 409; toast(error instanceof Error ? error.message : '저장하지 못했어요.'); return false; }
+    finally { locked.current = false; setBusy(false); if (conflict) void refreshRecords(); }
   };
   const login = async (email: string, password: string, mode: 'login' | 'signup') => {
     if (locked.current) return;
@@ -124,6 +189,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
   const verifyEmail = async (token: string) => { await api.verify(token); setEmailVerified(true); setVerificationToken(''); };
   const selectServerChild = async (workspace: string, child: ServerChild) => {
+    recordsRequest.current++; recordsPending.current = false; recordsReady.current = false; careRequest.current = null;
     const next = withServerChild(dataRef.current, child); next.onboardingComplete = true;
     setWorkspaceId(workspace); dataRef.current = next; setData(next);
     if (storageAccount.current) await persistData(storageAccount.current, next).catch(() => toast('아이 정보는 서버에 저장됐지만 브라우저에 보관하지 못했어요.'));
@@ -145,5 +211,5 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch (error) { toast(error instanceof Error ? error.message : '아이 정보를 저장하지 못했어요.'); return false; }
     finally { locked.current = false; setBusy(false); }
   };
-  return <AppContext.Provider value={{ data, account, path, go, commit, busy, toast, login, enterDemo, logout, online, api, authenticated, emailVerified, verificationToken, verifyEmail, workspaceId, saveChild, selectServerChild, sky }}>{children}<div className={'toast ' + (message ? 'show' : '')} role="status" aria-live="polite">{message}</div></AppContext.Provider>;
+  return <AppContext.Provider value={{ data, account, path, go, commit, busy, toast, login, enterDemo, logout, online, api, authenticated, emailVerified, verificationToken, verifyEmail, workspaceId, saveChild, selectServerChild, sky, recordsLoading, recordsError, refreshRecords }}>{children}<div className={'toast ' + (message ? 'show' : '')} role="status" aria-live="polite">{message}</div></AppContext.Provider>;
 }
