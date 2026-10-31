@@ -55,9 +55,9 @@ const physical = [0,1,2].map(i => ({...bannerProps.cries[0], id:`segment-${i}`, 
 const grouped = renderToStaticMarkup(<AppProvider><CryRecordList events={physical}/></AppProvider>);
 assert.equal((grouped.match(/class="cry-row"/g) || []).length,1);
 assert.equal((grouped.match(/대응 대기/g) || []).length,1);
-assert.ok(grouped.includes('개별 감지 구간 3개 보기'));
-assert.equal((grouped.match(/class="cry-segment-row"/g) || []).length,3);
-assert.ok(!grouped.includes('<details class="cry-segments" open'));
+assert.ok(!grouped.includes('감지 구간'));assert.ok(!grouped.includes('개 구간'));
+assert.ok(!grouped.includes('cry-segment-row'));
+assert.ok(!grouped.includes('<details'));
 const compact = renderToStaticMarkup(<CompactSleepSafety items={snapshot.items}/>);
 assert.ok(compact.includes('home-safety-grid'));
 assert.equal((compact.match(/class="badge /g) || []).length,4);
@@ -67,4 +67,4 @@ const home = renderToStaticMarkup(<AppProvider><Dashboard onAlert={() => {}}/></
 const sleepCard = home.slice(home.indexOf('우리 아이, 지금은'), home.indexOf('최근 울음 기록'));
 assert.ok(sleepCard.includes('home-safety-grid'));
 assert.ok(!sleepCard.includes('울음 관측'));assert.ok(!sleepCard.includes('home-cry-result'));
-console.log('PASS: repeated segments collapse to one response card with expandable history; home sleep card has only four compact safety tiles.');
+console.log('PASS: repeated segments collapse to one response card without individual segment controls; home sleep card has only four compact safety tiles.');
