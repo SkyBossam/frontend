@@ -88,3 +88,9 @@
 .home-layout>.child-banner,.home-layout>.alert-banner,.home-layout>.tip,.home-layout>.page-bottom-note{margin:0}
 .home-layout>.dashboard-grid{gap:var(--home-block-gap)}
 @media(max-width:760px){.home-layout{--home-block-gap:10px}}
+
+.record-sync-status { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; color: var(--muted, #777087); font-size: 12px; }
+.record-sync-status span { flex: 1; min-width: 180px; }
+.record-sync-status button { display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; color: inherit; padding: 8px; cursor: pointer; white-space: nowrap; }
+.record-sync-status.has-error { background: #fff3d7; color: #73571a; border-radius: 12px; padding: 10px 14px; }
+.daily-record-actions { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
