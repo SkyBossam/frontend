@@ -1,2 +1,3 @@
 import type { PageRegistry } from './pageTypes';
-export const pages: PageRegistry = {};
+import { Welcome } from './pages/Welcome';
+export const pages: PageRegistry = { Welcome };
