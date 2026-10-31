@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { pendingCryAlerts } from '../src/cryAlerts.ts';
+import { groupCryRecords, pendingCryAlerts } from '../src/cryAlerts.ts';
 import { emptyData, saveFeedback, type CryEvent, type Feedback } from '../src/domain.ts';
 import { careChanges, applySavedCare } from '../src/careHistory.ts';
 const event: CryEvent = { id: 'cry', childId: 'child', sourceId: 'camera', startedAt: '2026-11-01T00:00:00Z', cause: '', analysisAvailable: false };
@@ -37,4 +37,18 @@ test('two occurrences share one alert, later rearmed group remains independent',
   const third = { ...second, id: 'third', alertId: 'group2' };
   assert.deepEqual(pendingCryAlerts([first,second,third], [{ ...response, response: 'stopped' }], 'child'), [third]);
   assert.deepEqual(pendingCryAlerts([{...first, alertClosed:true},{...second,alertClosed:true}], [], 'child'), []);
+});
+
+test('record lists collapse one response group while preserving every physical interval', () => {
+  const first = { ...event, alertId: 'pending', durationSec: 1 };
+  const second = { ...first, id: 'second', startedAt: '2026-11-01T00:00:20Z', durationSec: 5 };
+  const third = { ...second, id: 'third', startedAt: '2026-11-01T00:01:00Z' };
+  const groups = groupCryRecords([first, third, second]);
+  assert.equal(groups.length, 1);
+  assert.equal(groups[0].latest.id, 'third');
+  assert.deepEqual(groups[0].events.map(e => e.durationSec), [5,5,1]);
+  assert.equal(groupCryRecords([first,{...second,alertId:'handled'}]).length,2);
+  assert.equal(groupCryRecords([first,{...second,childId:'another-child'}]).length,2);
+  assert.equal(groupCryRecords([first,{...second,sourceId:'another-pi'}]).length,2);
+  assert.equal(groupCryRecords([{...first,alertId:undefined},{...second,alertId:undefined}]).length,2);
 });
