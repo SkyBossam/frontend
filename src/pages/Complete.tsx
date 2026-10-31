@@ -1,0 +1,4 @@
+import { Check, ChevronRight } from 'lucide-react';
+import { Badge, Button, Cloud, EmptyState } from '../components';
+import { useCryFlow } from '../flows/CryFlow';
+export function Complete() { const { data, go, busy, event, feedback, draft, setDraft, selected, setSelected, stage, base, title, back, date, proceed, toggle, save, savedCard, actions } = useCryFlow(); return ((feedback ? <section className="card complete-card"><Cloud /><Badge tone="green"><Check size={13}/> 저장 완료</Badge><h2>기록이 저장되었어요</h2><p>{data.child!.name}의 변화와 시도한 행동이<br />소중한 돌봄 기록으로 남았어요.</p>{savedCard}<Button className="full" onClick={() => go('/children')}>확인</Button><Button variant="secondary" className="full" onClick={() => go(base)}>이력에서 보기 <ChevronRight size={17}/></Button></section> : <EmptyState title="아직 저장된 기록이 없어요" action={<Button onClick={() => go(base + '/actions')}>행동 기록하기</Button>}/>)); }
