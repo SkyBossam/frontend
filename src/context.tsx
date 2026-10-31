@@ -120,6 +120,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     window.addEventListener('online', resume); document.addEventListener('visibilitychange', resume);
     return () => { recordsRequest.current++; recordsPending.current = false; clearTimeout(first); clearInterval(interval); window.removeEventListener('online', resume); document.removeEventListener('visibilitychange', resume); };
   }, [authenticated, childId, workspaceId, refreshRecords]);
+  const crySignals = sky.snapshot?.items.map(item => `${item.deviceId}:${item.events.filter(e => e.event.kind === 'cry_started' || e.event.kind === 'cry_ended').map(e => e.event.id).join(',')}`).join('|') || '';
+  useEffect(() => { if (crySignals) void refreshRecords(); }, [crySignals, refreshRecords]);
   const commit = async (change: Change) => {
     if (locked.current || !account) return false;
     locked.current = true; setBusy(true);

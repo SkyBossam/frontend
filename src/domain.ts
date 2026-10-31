@@ -23,6 +23,14 @@ export interface Routine {
     status: 'todo' | 'in_progress' | 'done';
 }
 export interface CryEvent {
+    alertId?: string;
+    alertClosed?: boolean;
+    alertOccurrences?: number;
+    observationState?: 'crying' | 'ended' | 'interrupted';
+    endedAt?: string | null;
+    audioAnalysis?: { observedAt: string; cryDetected: boolean; babyCryScore: number | null; cryingScore: number | null } | null;
+    causes?: { causeKey: string; label: string; reason: string }[];
+    recommendations?: { actionKey: string; title: string; explanation: string; instructions: string[] }[];
     sourceId?: string;
     lastObservedAt?: string;
     id: string;
@@ -90,7 +98,7 @@ export interface AppData {
     onboardingComplete: boolean;
 }
 export const responseLabels: Record<CryResponse, string> = { stopped: '울음을 그쳤어요', reduced: '울음이 줄었어요', continues: '계속 울어요', unknown: '모르겠어요' };
-export const actionLabels: Record<string, string> = { sleep: '수면 환경 조정하기', hug: '안아주고 달래기', noise: '백색소음 들려주기', posture: '자세·상태 확인하기', diaper: '기저귀 상태 확인하기', other: '기타', none: '시도하지 않음' };
+export const actionLabels: Record<string, string> = { feed: '수유하기', sleep: '수면 환경 조정하기', hug: '안아주고 달래기', noise: '백색소음 들려주기', posture: '자세·상태 확인하기', diaper: '기저귀 상태 확인하기', other: '기타', none: '시도하지 않음' };
 export const koreaDate = (date = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
 export const today = () => koreaDate();
 export const timeLabel = (iso: string) => new Intl.DateTimeFormat('ko-KR', { timeZone: 'Asia/Seoul', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso));

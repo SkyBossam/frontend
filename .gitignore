@@ -10,3 +10,5 @@ artifacts/
 outputs/
 .env.*
 !.env.example
+
+local-*.log
