@@ -20,7 +20,7 @@ export function CryDetail() {
       <Button variant="secondary" className="full" onClick={() => go(base + '/recommendations')}>추천 행동 자세히 보기 <ArrowRight size={18}/></Button>
     </section>
     {savedCard}
-    {!editing && <Button className="full" variant="secondary" disabled={busy} onClick={() => { beginFollowUp(); setEditing(true); }}>{feedback ? stopped ? '대응·반응 다시 기록하기' : '추가 돌봄·울음 그침 확인하기' : '실제로 한 행동과 아이 반응 입력하기'} <ArrowRight size={18}/></Button>}
+    {!editing && <Button className="full care-response-cta" variant="primary" disabled={busy} onClick={() => { beginFollowUp(); setEditing(true); }}>{feedback ? stopped ? '대응·반응 다시 기록하기' : '추가 돌봄·울음 그침 확인하기' : '실제로 한 행동과 아이 반응 입력하기'} <ArrowRight size={18}/></Button>}
     {editing && <section className="card">
       <div className="flow-intro"><h2>어떻게 돌봐 주었나요?</h2><p>실제로 한 행동과 현재 아이의 반응을 함께 남겨 주세요.</p></div>
       <form onSubmit={event => { event.preventDefault(); void save(); }}>

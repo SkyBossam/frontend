@@ -109,3 +109,6 @@
 .live-card .home-safety-grid > div { min-width: 0; padding: 10px; gap: 6px; }
 .live-card .home-safety-grid > div > span:first-child { font-size: 12px; }
 .live-card .home-safety-grid .badge { font-size: 10px; padding: 3px 7px; white-space: normal; }
+
+.button.care-response-cta { background: #6941c6; color: #fff; }
+.button.care-response-cta:hover:not(:disabled) { background: #5731ad; }
