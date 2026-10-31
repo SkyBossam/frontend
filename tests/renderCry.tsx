@@ -1,3 +1,6 @@
+import { CryRecordList } from '../src/components/CryRecordList';
+import { CompactSleepSafety } from '../src/components/SkyEyePanel';
+import { Dashboard } from '../src/pages/Dashboard';
 import { HomeObservationBanner } from '../src/components/HomeObservationBanner';
 import { currentSnapshot, type SkySnapshot } from '../src/skyEye';
 import { CryAnalysis } from '../src/components/CryAnalysis';
@@ -47,3 +50,21 @@ snapshot.items[0].safety.face='immediate';
 banner = renderToStaticMarkup(<HomeObservationBanner {...bannerProps}/>);
 assert.ok(banner.includes('관측 결과 보기'));assert.ok(banner.includes('울음 상세 보기'));
 console.log('PASS: the main banner changes on audio detection without camera input, expires stale audio, and preserves simultaneous camera alerts.');
+
+const physical = [0,1,2].map(i => ({...bannerProps.cries[0], id:`segment-${i}`, alertId:'one-alert', childId:'child-demo', startedAt:`2026-11-01T00:0${i}:00Z`, durationSec:5}));
+const grouped = renderToStaticMarkup(<AppProvider><CryRecordList events={physical}/></AppProvider>);
+assert.equal((grouped.match(/class="cry-row"/g) || []).length,1);
+assert.equal((grouped.match(/대응 대기/g) || []).length,1);
+assert.ok(grouped.includes('개별 감지 구간 3개 보기'));
+assert.equal((grouped.match(/class="cry-segment-row"/g) || []).length,3);
+assert.ok(!grouped.includes('<details class="cry-segments" open'));
+const compact = renderToStaticMarkup(<CompactSleepSafety items={snapshot.items}/>);
+assert.ok(compact.includes('home-safety-grid'));
+assert.equal((compact.match(/class="badge /g) || []).length,4);
+for (const label of ['아기 자세','얼굴 노출','주변 물체','가장자리 접근']) assert.ok(compact.includes(label));
+assert.ok(compact.includes('즉시 확인'));
+const home = renderToStaticMarkup(<AppProvider><Dashboard onAlert={() => {}}/></AppProvider>);
+const sleepCard = home.slice(home.indexOf('우리 아이, 지금은'), home.indexOf('최근 울음 기록'));
+assert.ok(sleepCard.includes('home-safety-grid'));
+assert.ok(!sleepCard.includes('울음 관측'));assert.ok(!sleepCard.includes('home-cry-result'));
+console.log('PASS: repeated segments collapse to one response card with expandable history; home sleep card has only four compact safety tiles.');
