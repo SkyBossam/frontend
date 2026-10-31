@@ -23,6 +23,8 @@ export interface Routine {
     status: 'todo' | 'in_progress' | 'done';
 }
 export interface CryEvent {
+    sourceId?: string;
+    lastObservedAt?: string;
     id: string;
     childId: string;
     startedAt: string;
@@ -31,6 +33,9 @@ export interface CryEvent {
     analysisAvailable: boolean;
 }
 export interface Feedback {
+    version?: number;
+    updatedAt?: string;
+    history?: { actions: string[]; note: string; response: CryResponse; createdAt: string }[];
     eventId: string;
     childId: string;
     actions: string[];
@@ -39,6 +44,7 @@ export interface Feedback {
     createdAt: string;
 }
 export interface Draft {
+    version?: number;
     actions: string[];
     note: string;
     response?: CryResponse;
@@ -114,14 +120,20 @@ export function filterEvents(events: CryEvent[], childId: string, filter: string
 export function saveFeedback(data: AppData, feedback: Feedback): AppData {
     if (!data.child || feedback.childId !== data.child.id || !data.cries.some(e => e.id === feedback.eventId && e.childId === feedback.childId))
         throw new Error('해당 아이의 울음 기록을 찾을 수 없어요.');
-    if (data.feedback.some(f => f.eventId === feedback.eventId && f.childId === feedback.childId))
-        return data;
+    const previous = data.feedback.find(f => f.eventId === feedback.eventId && f.childId === feedback.childId);
+    if (previous && feedback.version === undefined) return data;
+    if (previous && feedback.version !== (previous.version ?? 1)) throw new Error('기록이 바뀌었어요. 다시 열어 주세요.');
     if (!feedback.actions.length || !responseLabels[feedback.response])
         throw new Error('시도 행동과 아이 반응을 선택해 주세요.');
     if (feedback.actions.includes('none') && feedback.actions.length > 1)
         throw new Error('시도하지 않음과 다른 행동을 함께 선택할 수 없어요.');
     const drafts = { ...data.drafts };
     delete drafts[feedback.eventId];
+    if (previous) {
+        const record = { ...feedback, version: previous.version, history: [...(previous.history || []), { actions: previous.actions, note: previous.note, response: previous.response, createdAt: previous.updatedAt || previous.createdAt }] };
+        if (data.demo) record.version = (previous.version ?? 1) + 1;
+        return { ...data, feedback: data.feedback.map(f => f === previous ? record : f), drafts };
+    }
     return { ...data, feedback: [...data.feedback, feedback], drafts };
 }
 export function updateAlert(alert: AlertEvent, action: 'open' | 'check' | 'close' | 'submit', result?: string): AlertEvent {

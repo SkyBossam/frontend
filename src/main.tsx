@@ -1,10 +1,11 @@
+import { pendingCryAlerts } from './cryAlerts';
 import { eventLabel } from './skyEye';
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Baby, Bell, ChevronRight, Heart, Home, Settings2, Video, WifiOff } from 'lucide-react';
 import { AppProvider, useApp } from './context';
 import { Brand, Button, Cloud, EmptyState, IconButton, Modal, NotificationBell, Profile } from './components';
-import { filterEvents, getSleepRisk, updateAlert } from './domain';
+import { getSleepRisk, updateAlert } from './domain';
 import { CryRow } from './components/Overview';
 import './styles.css';
 import { pages } from './pageRegistry';
@@ -27,10 +28,10 @@ function App() {
     useEffect(() => { if (path === '/home/summary') go('/children/history', true); }, [path, go]);
     const [alertOpen, setAlertOpen] = useState(false);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
-    const cryNotifications = data.child ? filterEvents(data.cries, data.child.id, 'all').filter(event => !data.feedback.some(f => f.eventId === event.id && f.childId === event.childId)) : [];
+    const cryNotifications = data.child ? pendingCryAlerts(data.cries, data.feedback, data.child.id) : [];
     const pendingCries = cryNotifications.length > 0;
     const active = data.demo && data.alert && data.alert.status !== 'resolved';
-    const modelNotifications = (sky.snapshot?.items || []).flatMap(device => device.events.filter(entry => entry.recent && ['risk_started', 'cry_episode_started'].includes(entry.event.kind)).map(entry => ({ device, event: entry.event })));
+    const modelNotifications = (sky.snapshot?.items || []).flatMap(device => device.events.filter(entry => entry.recent && entry.event.kind === 'risk_started' && entry.event.riskType !== 'cry').map(entry => ({ device, event: entry.event })));
     const modelPending = modelNotifications.length > 0;
     const openAlert = async () => { setAlertOpen(true); if (data.alert && data.alert.status !== 'resolved')
         await commit(d => ({ ...d, alert: updateAlert(d.alert!, 'open') })); };

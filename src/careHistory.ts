@@ -77,10 +77,13 @@ export function careChanges(previous: AppData, next: AppData): CareChanges {
       changes[kind === 'routines' ? 'deletedRoutines' : 'deletedSleepRecords'].push({ id: removed.id, version: removed.version });
     }
   }
-  for (const old of previous.feedback) if (!next.feedback.some(f => same(f, old))) throw new Error('저장된 대응 결과는 덮어쓸 수 없어요.');
-  for (const f of next.feedback) if (!previous.feedback.some(old => old.eventId === f.eventId)) {
+  for (const old of previous.feedback) if (!next.feedback.some(f => f.eventId === old.eventId && f.childId === old.childId)) throw new Error('대응 기록을 삭제할 수 없어요.');
+  for (const f of next.feedback) {
+    const old = previous.feedback.find(item => item.eventId === f.eventId);
+    if (same(old, f)) continue;
     if (f.childId !== child || !previous.cries.some(c => c.id === f.eventId && c.childId === child)) throw new Error('해당 울음 기록을 찾을 수 없어요.');
-    changes.feedback.push({ eventId: f.eventId, actions: f.actions, note: f.note, response: f.response });
+    if (old && (old.version === undefined || old.version !== f.version)) throw new Error('기록이 바뀌었어요. 다시 열어 주세요.');
+    changes.feedback.push({ eventId: f.eventId, version: f.version, actions: f.actions, note: f.note, response: f.response });
   }
   return changes;
 }

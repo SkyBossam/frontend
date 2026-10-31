@@ -12,7 +12,7 @@ export function ModelRiskNotification() {
     const { data, account, workspaceId, sky, go } = useApp();
     const [openKey, setOpenKey] = useState('');
     const observation = !data.demo && account && data.onboardingComplete
-        ? sky.snapshot?.items.flatMap(device => device.events.filter(entry => entry.recent && entry.event.kind === 'risk_started').map(entry => ({ device, event: entry.event })))[0] : undefined;
+        ? sky.snapshot?.items.flatMap(device => device.events.filter(entry => entry.recent && entry.event.kind === 'risk_started' && entry.event.riskType !== 'cry').map(entry => ({ device, event: entry.event })))[0] : undefined;
     const key = observation ? JSON.stringify([account, workspaceId, data.child?.id, observation.device.deviceId, observation.event.id]) : '';
     useEffect(() => {
         if (!key) { setOpenKey(''); return; }
