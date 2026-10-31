@@ -54,7 +54,7 @@ export function Modal({ title, onClose, children }: {
     title: string;
     onClose: () => void;
     children: ReactNode;
-}) { const panel = useRef<HTMLDivElement>(null); useEffect(() => { const previous = document.activeElement as HTMLElement; const old = document.body.style.overflow; document.body.style.overflow = 'hidden'; panel.current?.focus(); const handler = (e: KeyboardEvent) => { if (e.key === 'Escape')
+}) { const panel = useRef<HTMLDivElement>(null); useEffect(() => { const previous = document.activeElement as HTMLElement; const old = document.body.style.overflow; document.body.style.overflow = 'hidden'; panel.current?.focus(); const handler = (e: KeyboardEvent) => { const dialogs = document.querySelectorAll('[aria-modal="true"]'); if (dialogs[dialogs.length - 1] !== panel.current) return; if (e.key === 'Escape')
     onClose(); if (e.key === 'Tab') {
     const items = panel.current?.querySelectorAll<HTMLElement>('button:not(:disabled), input, select, textarea, a[href]');
     if (!items?.length)
