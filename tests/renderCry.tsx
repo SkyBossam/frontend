@@ -1,3 +1,5 @@
+import { HomeObservationBanner } from '../src/components/HomeObservationBanner';
+import { currentSnapshot, type SkySnapshot } from '../src/skyEye';
 import { CryAnalysis } from '../src/components/CryAnalysis';
 import { Monitor } from '../src/pages/Monitor';
 import React from 'react';
@@ -27,3 +29,21 @@ assert.ok(real.includes('아기 울음 감지'));assert.ok(real.includes('원인
 const monitor = renderToStaticMarkup(<AppProvider><Monitor onAlert={() => {}}/></AppProvider>);
 assert.ok(!monitor.includes('실제로 한 돌봄 알려주기'));assert.ok(!monitor.includes('보호자 기록을 모으고'));
 console.log('PASS: real detection is labelled without invented causes; monitoring has no learning-data collector.');
+
+const observedAt = '2026-11-01T00:00:00Z';
+const snapshot: SkySnapshot = { childId:'child', serverTime:observedAt, items:[{deviceId:'pi',name:'아이쿠',connected:true,
+  status:{observedAt,video:{available:false,observedAt:null,posture:null,airway:null,state:'unavailable',geometryValid:false,fallState:null,fps:null},audio:{available:true,observedAt,cryDetected:true,babyCryScore:0.4,cryingScore:0.1},personalization:null},
+  safety:{posture:'unknown',face:'unknown',objects:'unknown',edge:'unknown'},events:[],commands:[]}]};
+const bannerProps = {items:snapshot.items,cries:[{id:'current-cry',childId:'child',sourceId:'pi',startedAt:observedAt,lastObservedAt:observedAt,cause:'원인 미분류',analysisAvailable:false}],childId:'child',childName:'지안이',go:(_path:string)=>{}};
+let banner = renderToStaticMarkup(<HomeObservationBanner {...bannerProps}/>);
+assert.ok(banner.includes('지안이의 울음소리가 감지됐어요.'));
+assert.ok(banner.includes('울음 상세 보기'));assert.ok(banner.includes('alert-banner danger'));
+assert.ok(!banner.includes('현재 아이의 상태를 확인할 수 없어요.'));
+banner = renderToStaticMarkup(<HomeObservationBanner {...bannerProps} cries={[]}/>);
+assert.ok(banner.includes('울음 기록 보기'));
+banner = renderToStaticMarkup(<HomeObservationBanner {...bannerProps} items={currentSnapshot(snapshot,0,9000)!.items}/>);
+assert.ok(!banner.includes('울음소리가 감지됐어요.'));assert.ok(banner.includes('현재 아이의 상태를 확인할 수 없어요.'));
+snapshot.items[0].safety.face='immediate';
+banner = renderToStaticMarkup(<HomeObservationBanner {...bannerProps}/>);
+assert.ok(banner.includes('관측 결과 보기'));assert.ok(banner.includes('울음 상세 보기'));
+console.log('PASS: the main banner changes on audio detection without camera input, expires stale audio, and preserves simultaneous camera alerts.');
