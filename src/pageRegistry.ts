@@ -11,4 +11,5 @@ import { CryList } from './pages/CryList';
 import { CryFlow } from './flows/CryFlow';
 import { CryDetail } from './pages/CryDetail';
 import { Recommendations } from './pages/Recommendations';
-export const pages: PageRegistry = { Welcome, Auth, ChildSetup, AlertSetup, Dashboard, Summary, ChildManagement, Routines, CryList, CryFlow, CryDetail, Recommendations };
+import { ActionLog } from './pages/ActionLog';
+export const pages: PageRegistry = { Welcome, Auth, ChildSetup, AlertSetup, Dashboard, Summary, ChildManagement, Routines, CryList, CryFlow, CryDetail, Recommendations, ActionLog };
