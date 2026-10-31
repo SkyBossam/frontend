@@ -7,4 +7,5 @@ import { Dashboard } from './pages/Dashboard';
 import { Summary } from './pages/Summary';
 import { ChildManagement } from './pages/ChildManagement';
 import { Routines } from './pages/Routines';
-export const pages: PageRegistry = { Welcome, Auth, ChildSetup, AlertSetup, Dashboard, Summary, ChildManagement, Routines };
+import { CryList } from './pages/CryList';
+export const pages: PageRegistry = { Welcome, Auth, ChildSetup, AlertSetup, Dashboard, Summary, ChildManagement, Routines, CryList };
