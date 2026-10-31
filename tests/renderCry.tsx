@@ -1,3 +1,5 @@
+import { ActionLog } from '../src/pages/ActionLog';
+import { Response } from '../src/pages/Response';
 import { CryRecordList } from '../src/components/CryRecordList';
 import { CompactSleepSafety } from '../src/components/SkyEyePanel';
 import { Dashboard } from '../src/pages/Dashboard';
@@ -68,3 +70,13 @@ const sleepCard = home.slice(home.indexOf('우리 아이, 지금은'), home.inde
 assert.ok(sleepCard.includes('home-safety-grid'));
 assert.ok(!sleepCard.includes('울음 관측'));assert.ok(!sleepCard.includes('home-cry-result'));
 console.log('PASS: repeated segments collapse to one response card without individual segment controls; home sleep card has only four compact safety tiles.');
+
+location.pathname = '/children/cries/cry-1/actions';
+let carePage = renderToStaticMarkup(<AppProvider><CryFlow Page={ActionLog}/></AppProvider>);
+assert.ok(carePage.includes('어떤 행동을 시도했나요?'));assert.ok(carePage.includes('type="checkbox"'));
+assert.ok(!carePage.includes('울음 분석 결과'));
+data.drafts['cry-1'] = { actions:['hug'],note:'입력 중인 메모',version:2 };
+location.pathname = '/children/cries/cry-1/response';
+carePage = renderToStaticMarkup(<AppProvider><CryFlow Page={Response}/></AppProvider>);
+assert.ok(carePage.includes('아이가 울음을 그쳤나요?'));assert.ok(carePage.includes('type="radio"'));
+console.log('PASS: actual care and child response render as separate routed pages.');

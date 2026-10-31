@@ -30,7 +30,7 @@ function useCryFlowState() {
     const actions = cryGuidance(event).map(a => ({ id: a.actionKey, title: a.title, description: a.explanation, steps: a.instructions, icon: ShieldCheck }));
     const base = '/children/cries/' + eventId;
     const title = stage === 'recommendations' ? '추천 행동' : stage === 'actions' ? '시도 행동 기록' : stage === 'response' ? '아이 반응 선택' : stage === 'complete' ? '기록 완료' : '울음 상세';
-    const back = () => go(stage === 'detail' ? '/children/cries' : stage === 'recommendations' ? base : stage === 'actions' ? base + '/recommendations' : stage === 'response' ? base + '/actions' : '/children');
+    const back = () => go(stage === 'detail' ? '/children/cries' : stage === 'recommendations' ? base : stage === 'actions' ? base : stage === 'response' ? base + '/actions' : '/children');
     const date = koreaDate(new Date(event.startedAt));
     const proceed = async () => { if (!draft.actions.length) {
         toast('시도한 행동 또는 시도하지 않음을 선택해 주세요.');
