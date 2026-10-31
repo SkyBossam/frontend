@@ -16,4 +16,5 @@ import { Response } from './pages/Response';
 import { Complete } from './pages/Complete';
 import { Monitor } from './pages/Monitor';
 import { AlertModal } from './pages/AlertModal';
-export const pages: PageRegistry = { Welcome, Auth, ChildSetup, AlertSetup, Dashboard, Summary, ChildManagement, Routines, CryList, CryFlow, CryDetail, Recommendations, ActionLog, Response, Complete, Monitor, AlertModal };
+import { Settings } from './pages/Settings';
+export const pages: PageRegistry = { Welcome, Auth, ChildSetup, AlertSetup, Dashboard, Summary, ChildManagement, Routines, CryList, CryFlow, CryDetail, Recommendations, ActionLog, Response, Complete, Monitor, AlertModal, Settings };
