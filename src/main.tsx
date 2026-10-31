@@ -19,7 +19,7 @@ function Unavailable(_props: {
 const nav = [{ path: '/home', label: '홈', icon: Home }, { path: '/children', label: '우리 아이', icon: Baby }, { path: '/monitor', label: '모니터링', icon: Video }, { path: '/more', label: '더보기', icon: Settings2 }];
 function App() {
     const { Welcome = Unavailable, Auth = Unavailable, ChildSetup = Unavailable, AlertSetup = Unavailable, Dashboard = Unavailable, Summary = Unavailable, ChildManagement = Unavailable, Routines = Unavailable, CryList = Unavailable, CryFlow = Unavailable, CryDetail, Recommendations, ActionLog, Response, Complete, Monitor = Unavailable, AlertModal = Unavailable, Settings = Unavailable } = pages;
-    const { data, path, go, account, commit, online } = useApp();
+    const { data, path, go, account, authenticated, commit, online } = useApp();
     const [alertOpen, setAlertOpen] = useState(false);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const cryNotifications = data.child ? filterEvents(data.cries, data.child.id, 'all').filter(event => !data.feedback.some(f => f.eventId === event.id && f.childId === event.childId)) : [];
@@ -31,7 +31,7 @@ function App() {
         setAlertOpen(true);
     } }, [path]);
     useEffect(() => { document.title = (path === '/home' ? '오늘의 돌봄' : path.startsWith('/children') ? '우리 아이' : path === '/monitor' ? '모니터링' : '우리 아이의 편안한 하루') + ' · 아이쿠'; }, [path]);
-    if (path === '/devices') return <Devices />;
+    if (path === '/devices') return authenticated ? <Devices /> : null;
     if (path === '/signup' || path === '/login')
         return <Auth key={path}/>;
     if (path === '/onboarding/child' && account)
