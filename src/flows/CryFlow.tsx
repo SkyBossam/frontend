@@ -1,10 +1,10 @@
+import { cryGuidance } from '../cryPresentation';
 import { useEffect, useState } from 'react';
-import { Check, Heart, Moon, ShieldCheck, Sparkles, Volume2 } from 'lucide-react';
+import { Check, ShieldCheck } from 'lucide-react';
 import { Badge, Button, EmptyState, PageHeader, Steps } from '../components';
 import { useApp } from '../context';
 import { actionLabels, koreaDate, responseLabels, saveFeedback, timeLabel, type Draft } from '../domain';
 import { createContext, useContext, type ComponentType } from 'react';
-const actions = [{ id: 'sleep', icon: Moon, description: '주변 자극을 줄이고 편안한 환경을 만들어 주세요.', steps: ['조명을 낮추고 주변 소음을 줄여 주세요.', '아이의 얼굴과 호흡을 직접 살펴 주세요.', '수면 공간에 불필요한 물건이 없는지 확인해 주세요.'] }, { id: 'hug', icon: Heart, description: '아이를 부드럽게 안고 반응을 살펴 주세요.', steps: ['머리와 목을 편안히 받쳐 주세요.', '작은 목소리로 말을 걸며 천천히 달래 주세요.', '아이의 표정과 호흡의 변화를 살펴 주세요.'] }, { id: 'noise', icon: Volume2, description: '익숙하고 잔잔한 소리를 작게 들려주세요.', steps: ['소리 기기를 아이와 충분히 떨어뜨려 두세요.', '작은 음량으로 시작해 반응을 확인해 주세요.'] }, { id: 'posture', icon: ShieldCheck, description: '아이의 자세와 주변 상태를 직접 확인해 주세요.', steps: ['아이 얼굴이 가려져 있지 않은지 살펴 주세요.', '평소와 다른 불편한 모습이 있는지 확인해 주세요.'] }, { id: 'diaper', icon: Sparkles, description: '젖거나 불편한 부분이 없는지 살펴 주세요.', steps: ['기저귀 상태를 직접 확인해 주세요.', '옷이 조이거나 불편한 부분이 있는지 살펴 주세요.'] }];
 function useDraft(eventId: string) { const { data, account, toast } = useApp(); const key = `aicoo-draft:${account}:${data.child?.id}:${eventId}`; const [draft, setDraft] = useState<Draft>(() => { try {
     const cached = sessionStorage.getItem(key);
     if (cached)
@@ -24,9 +24,10 @@ function useCryFlowState() {
     const event = data.cries.find(e => e.id === eventId && e.childId === data.child?.id);
     const feedback = data.feedback.find(f => f.eventId === eventId && f.childId === data.child?.id);
     const { draft, setDraft, key } = useDraft(eventId);
-    const [selected, setSelected] = useState(draft.actions.find(a => actions.some(x => x.id === a)) || 'sleep');
+    const [selected, setSelected] = useState('');
     if (!event)
         return null;
+    const actions = cryGuidance(event).map(a => ({ id: a.actionKey, title: a.title, description: a.explanation, steps: a.instructions, icon: ShieldCheck }));
     const base = '/children/cries/' + eventId;
     const title = stage === 'recommendations' ? '추천 행동' : stage === 'actions' ? '시도 행동 기록' : stage === 'response' ? '아이 반응 선택' : stage === 'complete' ? '기록 완료' : '울음 상세';
     const back = () => go(stage === 'detail' ? '/children/cries' : stage === 'recommendations' ? base : stage === 'actions' ? base + '/recommendations' : stage === 'response' ? base + '/actions' : '/children');
@@ -46,11 +47,10 @@ function useCryFlowState() {
         go(base + '/complete');
     } };
     const beginFollowUp = () => {
-        const previous = feedback?.actions || [];
-        setDraft({ version: feedback?.version ?? (feedback ? 1 : undefined), actions: previous.map(id => id.startsWith('other:') ? 'other' : id), other: previous.find(id => id.startsWith('other:'))?.slice(6), note: '' });
+        setDraft({ version: feedback?.version ?? (feedback ? 1 : undefined), actions: [], note: '' });
     };
     const savedCard = feedback && <div className="saved-feedback"><div><Check size={17}/><strong>{feedback.response === 'stopped' ? '울음 그침 확인' : '대응 중 · 반응 확인 대기'}</strong></div>{[...(feedback.history || []), { ...feedback, createdAt: feedback.updatedAt || feedback.createdAt }].map((record, index) => <dl key={index}><dt>기록 시각</dt><dd>{koreaDate(new Date(record.createdAt))} {timeLabel(record.createdAt)}</dd><dt>시도한 행동</dt><dd>{record.actions.map(id => id.startsWith('other:') ? id.slice(6) : actionLabels[id] || id).join(', ')}</dd><dt>아이의 반응</dt><dd>{responseLabels[record.response]}</dd>{record.note && <><dt>메모</dt><dd>{record.note}</dd></>}</dl>)}</div>;
-    return { data, go, busy, event, feedback, draft, setDraft, selected, setSelected, stage, base, title, back, date, proceed, toggle, save, savedCard, actions, beginFollowUp };
+    return { data, go, busy, event, feedback, draft, setDraft, selected: selected || actions[0].id, setSelected, stage, base, title, back, date, proceed, toggle, save, savedCard, actions, beginFollowUp };
 }
 type CryFlowState = NonNullable<ReturnType<typeof useCryFlowState>>;
 const CryFlowContext = createContext<CryFlowState | null>(null);
