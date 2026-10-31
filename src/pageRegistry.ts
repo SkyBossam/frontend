@@ -5,4 +5,5 @@ import { ChildSetup } from './pages/ChildSetup';
 import { AlertSetup } from './pages/AlertSetup';
 import { Dashboard } from './pages/Dashboard';
 import { Summary } from './pages/Summary';
-export const pages: PageRegistry = { Welcome, Auth, ChildSetup, AlertSetup, Dashboard, Summary };
+import { ChildManagement } from './pages/ChildManagement';
+export const pages: PageRegistry = { Welcome, Auth, ChildSetup, AlertSetup, Dashboard, Summary, ChildManagement };
