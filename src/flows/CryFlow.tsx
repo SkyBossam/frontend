@@ -28,7 +28,7 @@ function useCryFlowState() {
     if (!event)
         return null;
     const base = '/children/cries/' + eventId;
-    const title = stage === 'recommendations' ? '맞춤 행동 관리' : stage === 'actions' ? '시도 행동 기록' : stage === 'response' ? '아이 반응 선택' : stage === 'complete' ? '기록 완료' : '울음 상세';
+    const title = stage === 'recommendations' ? '추천 행동' : stage === 'actions' ? '시도 행동 기록' : stage === 'response' ? '아이 반응 선택' : stage === 'complete' ? '기록 완료' : '울음 상세';
     const back = () => go(stage === 'detail' ? '/children/cries' : stage === 'recommendations' ? base : stage === 'actions' ? base + '/recommendations' : stage === 'response' ? base + '/actions' : '/children');
     const date = koreaDate(new Date(event.startedAt));
     const proceed = async () => { if (!draft.actions.length) {
