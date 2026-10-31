@@ -8,4 +8,6 @@ import { Summary } from './pages/Summary';
 import { ChildManagement } from './pages/ChildManagement';
 import { Routines } from './pages/Routines';
 import { CryList } from './pages/CryList';
-export const pages: PageRegistry = { Welcome, Auth, ChildSetup, AlertSetup, Dashboard, Summary, ChildManagement, Routines, CryList };
+import { CryFlow } from './flows/CryFlow';
+import { CryDetail } from './pages/CryDetail';
+export const pages: PageRegistry = { Welcome, Auth, ChildSetup, AlertSetup, Dashboard, Summary, ChildManagement, Routines, CryList, CryFlow, CryDetail };
