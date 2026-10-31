@@ -1,8 +1,12 @@
-export interface Session { accessToken: string; refreshToken: string; emailVerified?: boolean; verificationToken?: string }
+export interface Session { accessToken: string; refreshToken: string; userId?: string; emailVerified?: boolean; verificationToken?: string }
 export interface Workspace { id: string; name: string; role: string; type: string }
 export interface Child { id: string; displayName: string; birthDate: string; capabilities: string[] }
 export interface Device { id: string; name: string; childId: string; connected: boolean; state: string; lastSeenAt: string | null; pairedAt: string; fingerprint: string; canManage: boolean }
 export interface Pairing { pairingId: string; status: string; expiresAt: string; fingerprint: string }
+export function normalizeApiBaseUrl(value: string) {
+  // Accept either an origin or the API base copied from the backend documentation.
+  return value.trim().replace(/\/+$/, '').replace(/\/api(?:\/v1)?$/, '');
+}
 export class ApiError extends Error {
   status: number; code: string;
   constructor(status: number, code: string, message: string) { super(message); this.status = status; this.code = code; }
@@ -23,11 +27,12 @@ const messages: Record<string, string> = {
 };
 /** Account credentials live only in memory. Device credentials never reach this client. */
 export class DeviceClient {
+  onSessionExpired?: () => void;
   private baseUrl: string;
   private session: Session | null = null;
   private refreshing: Promise<void> | null = null;
   private generation = 0;
-  constructor(baseUrl = '') { this.baseUrl = baseUrl.replace(/\/$/, ''); }
+  constructor(baseUrl = '') { this.baseUrl = normalizeApiBaseUrl(baseUrl); }
   clear() { this.generation++; this.session = null; this.refreshing = null; }
   private async refresh() {
     if (!this.refreshing) {
@@ -35,7 +40,7 @@ export class DeviceClient {
       const generation = this.generation;
       this.refreshing = this.request<Session>('POST', '/auth/refresh', { refreshToken: token }, undefined, undefined, false)
         .then(session => { if (generation !== this.generation) throw new ApiError(401, 'SESSION_CHANGED', '다시 로그인해 주세요.'); this.session = session; })
-        .catch(error => { if (generation === this.generation) this.clear(); throw error; })
+        .catch(error => { if (generation === this.generation) { this.clear(); this.onSessionExpired?.(); } throw error; })
         .finally(() => { if (generation === this.generation) this.refreshing = null; });
     }
     return this.refreshing;
@@ -57,6 +62,8 @@ export class DeviceClient {
     }
     const data = await response.json().catch(() => null);
     if (!response.ok) {
+      if (response.status === 401 && !path.startsWith('/auth/') && this.session) { this.clear(); this.onSessionExpired?.(); }
+      if (response.status === 404 && path.startsWith('/auth/')) throw new ApiError(404, 'API_ROUTE_NOT_FOUND', '로그인 서버를 찾지 못했어요. 서버 연결 주소와 배포 설정을 확인해 주세요.');
       const code = data?.error?.code ?? 'API_ERROR';
       throw new ApiError(response.status, code, messages[code] ?? data?.error?.message ?? `요청에 실패했어요 (${response.status}).`);
     }
@@ -73,6 +80,7 @@ export class DeviceClient {
   workspaces() { return this.request<{ items: Workspace[] }>('GET', '/me/workspaces'); }
   children(workspace: string) { return this.request<{ items: Child[] }>('GET', '/children', undefined, workspace); }
   createChild(workspace: string, displayName: string, birthDate: string, key: string) { return this.request<Child>('POST', '/children', { displayName, birthDate }, workspace, key); }
+  updateChild(workspace: string, child: string, displayName: string, birthDate: string) { return this.request<Pick<Child, 'id' | 'displayName' | 'birthDate'>>('PATCH', `/children/${encodeURIComponent(child)}`, { displayName, birthDate }, workspace); }
   devices(workspace: string, child: string) { return this.request<{ items: Device[] }>('GET', `/children/${encodeURIComponent(child)}/devices`, undefined, workspace); }
   inspect(workspace: string, code: string) { return this.request<Pairing>('POST', '/device-pairings/inspect', { code: normalizePairingCode(code) }, workspace); }
   approve(workspace: string, childId: string, code: string, name: string, key: string) { return this.request('POST', '/device-pairings/approve', { code: normalizePairingCode(code), childId, name }, workspace, key); }

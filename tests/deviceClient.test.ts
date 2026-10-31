@@ -1,7 +1,28 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ApiError, DeviceClient, normalizePairingCode } from '../src/api/deviceClient.ts';
+import { ApiError, DeviceClient, normalizeApiBaseUrl, normalizePairingCode } from '../src/api/deviceClient.ts';
 const response = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
+
+test('login accepts origin or API base without duplicating /api/v1', async context => {
+  const urls: string[] = [];
+  context.mock.method(globalThis, 'fetch', async (url: string) => { urls.push(url); return response({ accessToken: 'a', refreshToken: 'r' }); });
+  for (const base of ['https://api.example', 'https://api.example/', ' https://api.example/api/v1/ ', 'https://api.example/api']) await new DeviceClient(base).authenticate('login', 'test@example.test', 'password');
+  assert.deepEqual(urls, Array(4).fill('https://api.example/api/v1/auth/login'));
+  assert.equal(normalizeApiBaseUrl('/api/v1'), '');
+  assert.equal(normalizeApiBaseUrl('https://api.example/service/api/v1'), 'https://api.example/service');
+});
+test('missing login route is identified as a server configuration error', async context => {
+  context.mock.method(globalThis, 'fetch', async () => new Response('Not Found', { status: 404 }));
+  await assert.rejects(new DeviceClient().authenticate('login', 'test@example.test', 'password'), (error: unknown) => error instanceof ApiError && error.code === 'API_ROUTE_NOT_FOUND');
+});
+test('failed refresh expires the shared account once, without affecting ordinary login errors', async context => {
+  let expired = 0;
+  context.mock.method(globalThis, 'fetch', async (url: string) => url.endsWith('/auth/login') ? response({ accessToken: 'a', refreshToken: 'r' }) : response({}, 401));
+  const client = new DeviceClient(); client.onSessionExpired = () => expired++;
+  await client.authenticate('login', 'test@example.test', 'password');
+  await assert.rejects(client.children('workspace'), ApiError); assert.equal(expired, 1);
+  await assert.rejects(client.authenticate('signup', 'test@example.test', 'password'), ApiError); assert.equal(expired, 1);
+});
 
 test('pairing codes normalize pasted links codes but reject ambiguous or malformed values', () => {
   assert.equal(normalizePairingCode(' abcd 2345 '), 'ABCD-2345');
