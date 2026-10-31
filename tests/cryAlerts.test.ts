@@ -28,3 +28,13 @@ test('follow-up response carries the saved version and retains earlier care acti
   assert.equal(saved.feedback[0].version, 2);
   assert.throws(() => saveFeedback(saved, { ...response, response: 'unknown' }), /바뀌었/);
 });
+
+test('two occurrences share one alert, later rearmed group remains independent', () => {
+  const first = { ...event, alertId: 'group1' };
+  const second = { ...first, id: 'second', startedAt: '2026-11-01T00:05:00Z' };
+  assert.deepEqual(pendingCryAlerts([first,second], [], 'child'), [second]);
+  assert.deepEqual(pendingCryAlerts([first,second], [{ ...response, response: 'stopped' }], 'child'), []);
+  const third = { ...second, id: 'third', alertId: 'group2' };
+  assert.deepEqual(pendingCryAlerts([first,second,third], [{ ...response, response: 'stopped' }], 'child'), [third]);
+  assert.deepEqual(pendingCryAlerts([{...first, alertClosed:true},{...second,alertClosed:true}], [], 'child'), []);
+});
