@@ -20,12 +20,12 @@ Object.defineProperty(globalThis, 'localStorage', { value: { getItem: () => JSON
 Object.defineProperty(globalThis, 'sessionStorage', { value: { getItem: (key: string) => key.endsWith(':session') ? 'demo' : null }, configurable: true });
 const render = () => renderToStaticMarkup(<AppProvider><CryFlow Page={CryDetail}/></AppProvider>);
 let html = render();
-assert.ok(html.includes('대응 대기'));assert.ok(html.includes('실제로 한 행동과 아이 반응 입력하기'));assert.ok(!html.includes('type="checkbox"'));assert.ok(html.indexOf('울음 분석 결과') < html.indexOf('추천 행동'));assert.ok(html.indexOf('추천 행동') < html.indexOf('실제로 한 행동과 아이 반응 입력하기'));
+assert.ok(!html.includes('울음 대응 상태'));assert.ok(!html.includes('같은 알림에 연결된 울음'));assert.ok(!html.includes('기본 돌봄 안내'));assert.ok(html.includes('실제로 한 행동과 아이 반응 입력하기'));assert.ok(!html.includes('type="checkbox"'));assert.ok(html.indexOf('울음 분석 결과') < html.indexOf('추천 행동'));assert.ok(html.indexOf('추천 행동') < html.indexOf('실제로 한 행동과 아이 반응 입력하기'));
 data.feedback.push({ eventId: 'cry-1', childId: 'child-demo', actions: ['hug'], note: '첫 번째 돌봄', response: 'continues', version: 2, createdAt: '2026-11-01T00:00:00Z', updatedAt: '2026-11-01T00:01:00Z', history: [{ actions: ['diaper'], response: 'unknown', note: '처음 확인', createdAt: '2026-11-01T00:00:00Z' }] });
 html = render();assert.ok(html.includes('대응 중'));assert.ok(html.includes('추가 돌봄·울음 그침 확인하기'));assert.ok(html.includes('첫 번째 돌봄'));assert.ok(html.includes('처음 확인'));
 data.feedback[data.feedback.length - 1].response = 'stopped';
 html = render();assert.ok(html.includes('울음 그침 확인'));assert.ok(html.includes('대응·반응 다시 기록하기'));
-console.log('PASS: cry detail renders analysis and recommendations before the care form, waiting status, preserved history and stopped confirmation.');
+console.log('PASS: cry detail renders analysis and recommendations before the care form, preserved history and stopped confirmation.');
 
 const real = renderToStaticMarkup(<CryAnalysis event={{id:'real', childId:'child', startedAt:'2026-11-01T00:00:00Z', cause:'원인 미분류', analysisAvailable:false, audioAnalysis:{observedAt:'2026-11-01T00:00:00Z',cryDetected:true,babyCryScore:0.4,cryingScore:0.1}}}/>);
 assert.ok(real.includes('아기 울음 감지'));assert.ok(real.includes('원인 미분류'));assert.ok(real.includes('0.40'));
