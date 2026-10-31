@@ -84,3 +84,7 @@
 .daily-flow-title-link{padding:0;color:inherit;font:inherit;text-align:left}.daily-flow-title-link:hover{color:#8962ca}.daily-flow-expanded .daily-flow-records{max-height:none;overflow:visible}.daily-flow-date{display:flex;align-items:center;gap:12px;margin:0 0 20px;font-size:12px;color:#82718f}.daily-flow-date input{border:1px solid #e7dcef;border-radius:10px;padding:9px 12px;color:#655174;background:#fff;font:inherit;min-width:0}
 
 .camera-live-image{width:100%;height:100%;object-fit:contain!important;background:#151526}.camera-selector{position:absolute;right:12px;top:50px;z-index:2;display:flex;gap:8px;align-items:center;padding:8px;border-radius:10px;background:#ffffffed;color:#342b52;font-size:12px}.camera-selector select{max-width:180px;padding:6px;border-radius:6px}.device-analysis code{display:block;overflow-wrap:anywhere;padding:10px;border-radius:8px;background:#f4f0ff;font-size:12px}
+.home-layout{--home-block-gap:24px;display:flex;flex-direction:column;gap:var(--home-block-gap)}
+.home-layout>.child-banner,.home-layout>.alert-banner,.home-layout>.tip,.home-layout>.page-bottom-note{margin:0}
+.home-layout>.dashboard-grid{gap:var(--home-block-gap)}
+@media(max-width:760px){.home-layout{--home-block-gap:10px}}
