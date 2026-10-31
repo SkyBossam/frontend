@@ -40,13 +40,17 @@ function useCryFlowState() {
     } if (await commit(d => ({ ...d, drafts: { ...d.drafts, [eventId]: draft } })))
         go(base + '/response'); };
     const toggle = (id: string) => setDraft(d => ({ ...d, actions: id === 'none' ? ['none'] : d.actions.includes(id) ? d.actions.filter(a => a !== id) : [...d.actions.filter(a => a !== 'none'), id] }));
-    const save = async () => { if (!draft.response || !draft.actions.length || busy)
-        return; const actionsToSave = draft.actions.map(id => id === 'other' ? 'other:' + draft.other : id); if (await commit(d => saveFeedback(d, { eventId, childId: data.child!.id, actions: actionsToSave, note: draft.note, response: draft.response!, createdAt: new Date().toISOString() }))) {
+    const save = async () => { if (draft.actions.includes('other') && !draft.other?.trim()) { toast('기타 행동을 입력해 주세요.'); return; } if (!draft.response || !draft.actions.length || busy)
+        return; const actionsToSave = draft.actions.map(id => id === 'other' ? 'other:' + draft.other : id); if (await commit(d => saveFeedback(d, { eventId, version: draft.version, childId: data.child!.id, actions: actionsToSave, note: draft.note, response: draft.response!, createdAt: new Date().toISOString() }))) {
         sessionStorage.removeItem(key);
         go(base + '/complete');
     } };
-    const savedCard = feedback && <div className="saved-feedback"><div><Check size={17}/><strong>이전 대응 결과</strong><span>{timeLabel(feedback.createdAt)} 기록</span></div><dl><dt>시도한 행동</dt><dd>{feedback.actions.map(id => id.startsWith('other:') ? id.slice(6) : actionLabels[id] || id).join(', ')}</dd><dt>아이의 반응</dt><dd>{responseLabels[feedback.response]}</dd>{feedback.note && <><dt>메모</dt><dd>{feedback.note}</dd></>}</dl></div>;
-    return { data, go, busy, event, feedback, draft, setDraft, selected, setSelected, stage, base, title, back, date, proceed, toggle, save, savedCard, actions };
+    const beginFollowUp = () => {
+        const previous = feedback?.actions || [];
+        setDraft({ version: feedback?.version ?? (feedback ? 1 : undefined), actions: previous.map(id => id.startsWith('other:') ? 'other' : id), other: previous.find(id => id.startsWith('other:'))?.slice(6), note: '' });
+    };
+    const savedCard = feedback && <div className="saved-feedback"><div><Check size={17}/><strong>{feedback.response === 'stopped' ? '울음 그침 확인' : '대응 중 · 반응 확인 대기'}</strong></div>{[...(feedback.history || []), { ...feedback, createdAt: feedback.updatedAt || feedback.createdAt }].map((record, index) => <dl key={index}><dt>기록 시각</dt><dd>{koreaDate(new Date(record.createdAt))} {timeLabel(record.createdAt)}</dd><dt>시도한 행동</dt><dd>{record.actions.map(id => id.startsWith('other:') ? id.slice(6) : actionLabels[id] || id).join(', ')}</dd><dt>아이의 반응</dt><dd>{responseLabels[record.response]}</dd>{record.note && <><dt>메모</dt><dd>{record.note}</dd></>}</dl>)}</div>;
+    return { data, go, busy, event, feedback, draft, setDraft, selected, setSelected, stage, base, title, back, date, proceed, toggle, save, savedCard, actions, beginFollowUp };
 }
 type CryFlowState = NonNullable<ReturnType<typeof useCryFlowState>>;
 const CryFlowContext = createContext<CryFlowState | null>(null);

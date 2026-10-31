@@ -94,3 +94,7 @@
 .record-sync-status button { display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; color: inherit; padding: 8px; cursor: pointer; white-space: nowrap; }
 .record-sync-status.has-error { background: #fff3d7; color: #73571a; border-radius: 12px; padding: 10px 14px; }
 .daily-record-actions { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+
+.flow-page fieldset { border: 0; padding: 0; margin: 0 0 24px; min-width: 0; }
+.flow-page legend { font-weight: 700; margin-bottom: 12px; }
+.saved-feedback dl + dl { border-top: 1px solid var(--line, #ebe7f5); padding-top: 16px; margin-top: 16px; }
