@@ -1,3 +1,4 @@
+import type { CareAction, SkySnapshot } from '../skyEye';
 export interface Session { accessToken: string; refreshToken: string; userId?: string; emailVerified?: boolean; verificationToken?: string }
 export interface Workspace { id: string; name: string; role: string; type: string }
 export interface Child { id: string; displayName: string; birthDate: string; capabilities: string[] }
@@ -53,7 +54,7 @@ export class DeviceClient {
     if (workspace) headers.set('X-Workspace-Id', workspace);
     if (key) headers.set('Idempotency-Key', key);
     let response: Response;
-    try { response = await fetch(`${this.baseUrl}/api/v1${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body), cache: 'no-store', credentials: 'omit', redirect: 'error' }); }
+    try { response = await fetch(`${this.baseUrl}/api/v1${path}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body), cache: 'no-store', credentials: 'omit', redirect: 'error', signal: AbortSignal.timeout(15000) }); }
     catch { throw new Error('서버에 연결하지 못했어요. 네트워크와 아이쿠 서버 주소를 확인해 주세요.'); }
     if (response.status === 401 && retry && this.session && !path.startsWith('/auth/')) {
       // Another concurrent request may already have rotated the access token.
@@ -85,4 +86,6 @@ export class DeviceClient {
   inspect(workspace: string, code: string) { return this.request<Pairing>('POST', '/device-pairings/inspect', { code: normalizePairingCode(code) }, workspace); }
   approve(workspace: string, childId: string, code: string, name: string, key: string) { return this.request('POST', '/device-pairings/approve', { code: normalizePairingCode(code), childId, name }, workspace, key); }
   unlink(workspace: string, device: string) { return this.request('DELETE', `/devices/${encodeURIComponent(device)}`, undefined, workspace); }
+  skyEye(workspace: string, child: string) { return this.request<SkySnapshot>('GET', `/children/${encodeURIComponent(child)}/sky-eye`, undefined, workspace); }
+  modelFeedback(workspace: string, child: string, deviceId: string, episodeUid: string, action: CareAction) { return this.request<{ id: string; status: string }>('POST', `/children/${encodeURIComponent(child)}/sky-eye/feedback`, { deviceId, episodeUid, action }, workspace); }
 }

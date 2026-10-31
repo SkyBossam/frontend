@@ -3,6 +3,7 @@ import { demoData, emptyData, type AppData, type Child } from './domain';
 import { getSession, persistData, readData, setSession } from './store';
 import { DeviceClient, type Child as ServerChild } from './api/deviceClient';
 import { authContinuation, deviceLoginRoute, homeRoute, previewAccount, routeRedirect, withServerChild } from './sessionFlow';
+import { useSkyEye } from './useSkyEye';
 
 type Change = AppData | ((previous: AppData) => AppData);
 interface Context {
@@ -18,6 +19,7 @@ interface Context {
   workspaceId: string;
   saveChild: (child: Child) => Promise<boolean>;
   selectServerChild: (workspace: string, child: ServerChild) => Promise<void>;
+  sky: ReturnType<typeof useSkyEye>;
 }
 const AppContext = createContext<Context>(null!);
 export const useApp = () => useContext(AppContext);
@@ -29,6 +31,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [emailVerified, setEmailVerified] = useState(false), [verificationToken, setVerificationToken] = useState('');
   const [workspaceId, setWorkspaceId] = useState('');
   const [data, setData] = useState(() => readData(previewAccount(getSession())));
+  const sky = useSkyEye(api, `${account}:${workspaceId}:${data.child?.id}`, workspaceId, data.child?.id || '', authenticated && !data.demo);
   const dataRef = useRef(data), storageAccount = useRef<string | null>(previewAccount(getSession()));
   const [path, setPath] = useState(window.location.pathname);
   const [busy, setBusy] = useState(false), locked = useRef(false);
@@ -142,5 +145,5 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch (error) { toast(error instanceof Error ? error.message : '아이 정보를 저장하지 못했어요.'); return false; }
     finally { locked.current = false; setBusy(false); }
   };
-  return <AppContext.Provider value={{ data, account, path, go, commit, busy, toast, login, enterDemo, logout, online, api, authenticated, emailVerified, verificationToken, verifyEmail, workspaceId, saveChild, selectServerChild }}>{children}<div className={'toast ' + (message ? 'show' : '')} role="status" aria-live="polite">{message}</div></AppContext.Provider>;
+  return <AppContext.Provider value={{ data, account, path, go, commit, busy, toast, login, enterDemo, logout, online, api, authenticated, emailVerified, verificationToken, verifyEmail, workspaceId, saveChild, selectServerChild, sky }}>{children}<div className={'toast ' + (message ? 'show' : '')} role="status" aria-live="polite">{message}</div></AppContext.Provider>;
 }
