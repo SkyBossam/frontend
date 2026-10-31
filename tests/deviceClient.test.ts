@@ -3,6 +3,30 @@ import assert from 'node:assert/strict';
 import { ApiError, DeviceClient, normalizeApiBaseUrl, normalizePairingCode } from '../src/api/deviceClient.ts';
 const response = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
 
+test('login and signup send only username and password', async context => {
+  const requests: { url: string; body: unknown }[] = [];
+  context.mock.method(globalThis, 'fetch', async (url: string, init: RequestInit) => {
+    requests.push({ url, body: JSON.parse(init.body as string) });
+    return response({ accessToken: 'test', refreshToken: 'refresh', username: 'aicoo.parent', email: 'contact@example.test', userId: 'same-account', emailVerified: true });
+  });
+  const client = new DeviceClient();
+  const session = await client.authenticate('login', ' Aicoo.Parent ', 'test-password');
+  assert.deepEqual(requests[0], { url: '/api/v1/auth/login', body: { username: 'aicoo.parent', password: 'test-password' } });
+  assert.equal(session.username, 'aicoo.parent'); assert.equal(session.email, 'contact@example.test');
+  await client.authenticate('signup', ' Aicoo.Parent ', 'test-password');
+  assert.deepEqual(requests[1], { url: '/api/v1/auth/signup', body: { username: 'aicoo.parent', password: 'test-password' } });
+});
+test('old email login and duplicate ID feedback remain usable', async context => {
+  const fetch = context.mock.method(globalThis, 'fetch', async (_url: string, init: RequestInit) => {
+    assert.deepEqual(JSON.parse(init.body as string), { username: 'old@example.test', password: 'test-password' });
+    return response({ accessToken: 'a', refreshToken: 'r', username: 'old', email: 'old@example.test' });
+  });
+  const client = new DeviceClient();
+  assert.equal((await client.authenticate('login', 'OLD@example.test', 'test-password')).username, 'old');
+  fetch.mock.mockImplementation(async () => response({ error: { code: 'USERNAME_UNAVAILABLE' } }, 409));
+  await assert.rejects(client.authenticate('signup', 'old', 'test-password'), /이미 사용 중인 아이디/);
+});
+
 test('camera frames use user authentication and workspace scope, including refresh', async context => {
   let frames = 0;
   context.mock.method(globalThis, 'fetch', async (url: string, init: RequestInit) => {

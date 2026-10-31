@@ -1,6 +1,6 @@
 import type { CareAction, SkySnapshot } from '../skyEye';
 import type { CareChanges, HistoryKind, SavedCare } from '../careHistory';
-export interface Session { accessToken: string; refreshToken: string; userId?: string; emailVerified?: boolean; verificationToken?: string }
+export interface Session { accessToken: string; refreshToken: string; userId?: string; username?: string; email?: string | null; emailVerified?: boolean; }
 export interface Workspace { id: string; name: string; role: string; type: string }
 export interface Child { id: string; displayName: string; birthDate: string; capabilities: string[] }
 export interface Device { id: string; name: string; childId: string; connected: boolean; state: string; lastSeenAt: string | null; pairedAt: string; fingerprint: string; canManage: boolean }
@@ -25,7 +25,10 @@ const messages: Record<string, string> = {
   PAIRING_ALREADY_USED: '이미 사용한 코드예요. 연결된 기기를 확인해 주세요.',
   DEVICE_ALREADY_PAIRED: '이미 연결된 파이예요. 기존 보호자가 연결을 해제해야 해요.',
   PAIRING_RATE_LIMITED: '확인 요청이 많아요. 15분 뒤 다시 시도해 주세요.',
-  EMAIL_VERIFICATION_REQUIRED: '이메일 인증을 먼저 완료해 주세요.',
+  INVALID_CREDENTIALS: '아이디 또는 비밀번호를 확인해 주세요.',
+  USERNAME_UNAVAILABLE: '이미 사용 중인 아이디예요. 다른 아이디를 입력해 주세요.',
+  INVALID_USERNAME: '아이디는 영문·숫자로 시작하는 1~32자의 영문, 숫자, 점, 밑줄, 하이픈으로 입력해 주세요.',
+  ACCOUNT_UNAVAILABLE: '가입 정보를 확인해 주세요. 이미 가입했다면 로그인해 주세요.',
   CARE_RECORD_CHANGED: '다른 화면에서 기록이 변경됐어요. 최신 기록을 불러온 뒤 다시 열어 주세요.',
   FEEDBACK_ALREADY_RECORDED: '이미 대응 결과가 저장됐어요. 최신 기록을 확인해 주세요.',
   INVALID_SLEEP_TIME: '수면 종료는 시작 이후여야 하고, 미래 시간은 기록할 수 없어요. 최대 7일 범위로 입력해 주세요.',
@@ -83,13 +86,13 @@ export class DeviceClient {
     if (!data) throw new Error('서버 응답을 확인할 수 없어요. API 주소를 확인해 주세요.');
     return data as T;
   }
-  async authenticate(mode: 'login' | 'signup', email: string, password: string) {
-    const session = await this.request<Session>('POST', `/auth/${mode}`, { email, password });
+  async authenticate(mode: 'login' | 'signup', identifier: string, password: string) {
+    const normalized = identifier.trim().toLowerCase();
+    const body = { username: normalized, password };
+    const session = await this.request<Session>('POST', `/auth/${mode}`, body);
     this.generation++; this.refreshing = null; this.session = session; return session;
   }
   async logout() { try { await this.request('POST', '/auth/logout', {}); } finally { this.clear(); } }
-  verify(token: string) { return this.request('POST', '/auth/verify-email', { token }); }
-  resend(email: string) { return this.request<{ verificationToken?: string }>('POST', '/auth/request-verification', { email }); }
   workspaces() { return this.request<{ items: Workspace[] }>('GET', '/me/workspaces'); }
   children(workspace: string) { return this.request<{ items: Child[] }>('GET', '/children', undefined, workspace); }
   createChild(workspace: string, displayName: string, birthDate: string, key: string) { return this.request<Child>('POST', '/children', { displayName, birthDate }, workspace, key); }

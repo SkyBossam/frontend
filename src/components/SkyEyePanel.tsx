@@ -20,7 +20,7 @@ export function SkyEyeSafety() {
 }
 
 function Feedback({ device, episode }: { device: SkyDevice; episode: ModelEpisode }) {
-  const { api, workspaceId, data, toast, emailVerified } = useApp();
+  const { api, workspaceId, data, toast } = useApp();
   const [action, setAction] = useState<CareAction | ''>('');
   const [sending, setSending] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -39,9 +39,8 @@ function Feedback({ device, episode }: { device: SkyDevice; episode: ModelEpisod
   };
   return <div className="model-feedback"><strong>{date(episode.endedAt)} 종료한 울음</strong>
     {state ? <p role="status">{state === 'applied' ? `파이 반영 완료 · ${recorded ? careLabels[recorded] : ''}` : state === 'queued' ? '파이에 전달 중 · 아직 학습에 반영되지 않았어요' : state === 'expired' ? '전달 시간 만료 · 기기 연결을 확인해 주세요' : '파이 처리 실패 · 기기에서 기록을 확인해 주세요'}</p> : <>
-      <label>실제로 어떤 돌봄을 했나요?<select value={action} onChange={e => setAction(e.target.value as CareAction | '')} disabled={sending || !emailVerified}><option value="">행동 선택</option>{Object.entries(careLabels).map(([key, label]) => <option value={key} key={key}>{label}</option>)}</select></label>
-      <Button variant="secondary" onClick={submit} disabled={!action || sending || !emailVerified}>{sending ? '전송 중…' : '실제 행동 기록하기'}</Button>
-      {!emailVerified && <p>이메일 인증을 완료하면 기록할 수 있어요.</p>}
+      <label>실제로 어떤 돌봄을 했나요?<select value={action} onChange={e => setAction(e.target.value as CareAction | '')} disabled={sending}><option value="">행동 선택</option>{Object.entries(careLabels).map(([key, label]) => <option value={key} key={key}>{label}</option>)}</select></label>
+      <Button variant="secondary" onClick={submit} disabled={!action || sending}>{sending ? '전송 중…' : '실제 행동 기록하기'}</Button>
     </>}
   </div>;
 }

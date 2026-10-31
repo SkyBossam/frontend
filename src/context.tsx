@@ -8,15 +8,14 @@ import { useSkyEye } from './useSkyEye';
 
 type Change = AppData | ((previous: AppData) => AppData);
 interface Context {
-  data: AppData; account: string | null; path: string; busy: boolean; online: boolean;
+  data: AppData; account: string | null; username: string; path: string; busy: boolean; online: boolean;
   go: (path: string, replace?: boolean) => void;
   commit: (change: Change) => Promise<boolean>;
   toast: (message: string) => void;
-  login: (email: string, password: string, mode: 'login' | 'signup') => Promise<void>;
+  login: (identifier: string, password: string, mode: 'login' | 'signup') => Promise<void>;
   enterDemo: () => Promise<void>;
   logout: () => Promise<void>;
-  api: DeviceClient; authenticated: boolean; emailVerified: boolean; verificationToken: string;
-  verifyEmail: (token: string) => Promise<void>;
+  api: DeviceClient; authenticated: boolean;
   workspaceId: string;
   saveChild: (child: Child) => Promise<boolean>;
   selectServerChild: (workspace: string, child: ServerChild) => Promise<void>;
@@ -29,8 +28,8 @@ export const useApp = () => useContext(AppContext);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [api] = useState(() => new DeviceClient(import.meta.env.VITE_API_BASE_URL || ''));
   const [account, setAccount] = useState(() => previewAccount(getSession()));
+  const [username, setUsername] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
-  const [emailVerified, setEmailVerified] = useState(false), [verificationToken, setVerificationToken] = useState('');
   const [workspaceId, setWorkspaceId] = useState('');
   const [data, setData] = useState(() => readData(previewAccount(getSession())));
   const sky = useSkyEye(api, `${account}:${workspaceId}:${data.child?.id}`, workspaceId, data.child?.id || '', authenticated && !data.demo);
@@ -54,8 +53,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   function resetAccount() {
     recordsRequest.current++; recordsReady.current = false; recordsPending.current = false; careRequest.current = null;
     setRecordsLoading(false); setRecordsError('');
-    api.clear(); setAuthenticated(false); setEmailVerified(false); setVerificationToken(''); setWorkspaceId('');
-    setAccount(null); storageAccount.current = null; createChildRequest.current = null;
+    api.clear(); setAuthenticated(false); setWorkspaceId('');
+    setAccount(null); setUsername(''); storageAccount.current = null; createChildRequest.current = null;
     dataRef.current = emptyData(); setData(dataRef.current);
     try { setSession(null); } catch { /* In-memory logout still succeeds if storage is blocked. */ }
   }
@@ -145,25 +144,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     catch (error) { conflict = error instanceof ApiError && error.status === 409; toast(error instanceof Error ? error.message : '저장하지 못했어요.'); return false; }
     finally { locked.current = false; setBusy(false); if (conflict) void refreshRecords(); }
   };
-  const login = async (email: string, password: string, mode: 'login' | 'signup') => {
+  const login = async (identifier: string, password: string, mode: 'login' | 'signup') => {
     if (locked.current) return;
     locked.current = true; setBusy(true);
     const continuation = authContinuation(window.location.search, window.location.hash);
     try {
-      const normalizedEmail = email.trim().toLowerCase();
-      const session = await api.authenticate(mode, normalizedEmail, password);
+      const normalized = identifier.trim().toLowerCase();
+      const session = await api.authenticate(mode, normalized, password);
+      const accountKey = session.email || `user:${session.userId || normalized}`;
       const spaces = await api.workspaces();
       const workspace = spaces.items.find(item => item.type === 'PERSONAL') || spaces.items[0];
       if (!workspace) throw new Error('이 계정의 돌봄 공간을 찾지 못했어요.');
       const serverChildren = (await api.children(workspace.id)).items;
-      const storageKey = `server:${session.userId || normalizedEmail}`;
+      const storageKey = `server:${session.userId || accountKey}`;
       const previous = readData(storageKey);
       const child = serverChildren.find(item => item.id === previous.child?.id) || serverChildren[0] || null;
       const next = withServerChild(previous, child);
       if (child) next.onboardingComplete = true;
       storageAccount.current = storageKey; dataRef.current = next; setData(next);
-      setAccount(normalizedEmail); setAuthenticated(true); setWorkspaceId(workspace.id);
-      setEmailVerified(session.emailVerified === true); setVerificationToken(session.verificationToken || '');
+      setAccount(accountKey); setUsername(session.username || (normalized.includes('@') ? '' : normalized)); setAuthenticated(true); setWorkspaceId(workspace.id);
       try { setSession(null); } catch { /* Credentials remain memory-only. */ }
       go(continuation || homeRoute(next), true);
     } catch (error) { api.clear(); throw error; }
@@ -175,7 +174,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const next = readData('demo').child ? readData('demo') : demoData();
       await persistData('demo', next); setSession('demo'); api.clear(); setAuthenticated(false);
-      setEmailVerified(false); setVerificationToken(''); setWorkspaceId('');
+      setWorkspaceId(''); setUsername('');
       storageAccount.current = 'demo'; dataRef.current = next; setData(next); setAccount('demo'); go('/home');
     } catch { toast('브라우저 저장 공간에 접근할 수 없어요.'); }
     finally { locked.current = false; setBusy(false); }
@@ -187,7 +186,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     catch { toast('이 기기에서 로그아웃했어요. 서버에 연결하지 못했어요.'); }
     finally { resetAccount(); go('/welcome', true); locked.current = false; setBusy(false); }
   };
-  const verifyEmail = async (token: string) => { await api.verify(token); setEmailVerified(true); setVerificationToken(''); };
   const selectServerChild = async (workspace: string, child: ServerChild) => {
     recordsRequest.current++; recordsPending.current = false; recordsReady.current = false; careRequest.current = null;
     const next = withServerChild(dataRef.current, child); next.onboardingComplete = true;
@@ -211,5 +209,5 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch (error) { toast(error instanceof Error ? error.message : '아이 정보를 저장하지 못했어요.'); return false; }
     finally { locked.current = false; setBusy(false); }
   };
-  return <AppContext.Provider value={{ data, account, path, go, commit, busy, toast, login, enterDemo, logout, online, api, authenticated, emailVerified, verificationToken, verifyEmail, workspaceId, saveChild, selectServerChild, sky, recordsLoading, recordsError, refreshRecords }}>{children}<div className={'toast ' + (message ? 'show' : '')} role="status" aria-live="polite">{message}</div></AppContext.Provider>;
+  return <AppContext.Provider value={{ data, account, username, path, go, commit, busy, toast, login, enterDemo, logout, online, api, authenticated, workspaceId, saveChild, selectServerChild, sky, recordsLoading, recordsError, refreshRecords }}>{children}<div className={'toast ' + (message ? 'show' : '')} role="status" aria-live="polite">{message}</div></AppContext.Provider>;
 }
