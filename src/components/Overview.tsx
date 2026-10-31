@@ -1,16 +1,17 @@
 import { ArrowRight, Bell, ChevronRight, CircleAlert, Moon, Video, WifiOff } from 'lucide-react';
 import { Badge, Button, Cloud } from '../components';
 import { useApp } from '../context';
-import { filterEvents, koreaDate, timeLabel, today, type CryEvent } from '../domain';
-export function CryRow({ event }: {
+import { getSleepRisk, filterEvents, koreaDate, timeLabel, today, type CryEvent } from '../domain';
+export function CryRow({ event, onSelect }: {
     event: CryEvent;
-}) { const { go, data } = useApp(); const feedback = data.feedback.find(f => f.eventId === event.id && f.childId === event.childId); return <button className="cry-row" onClick={() => go('/children/cries/' + event.id)}><span className={'round-icon ' + (feedback ? 'play' : 'cry')}><Bell size={18}/></span><span className="cry-time">{timeLabel(event.startedAt)}<small>{koreaDate(new Date(event.startedAt)) === today() ? '오늘' : koreaDate(new Date(event.startedAt)).slice(5).replace('-', '.')}</small></span><span className="cry-copy"><strong>울음 {event.durationSec === undefined ? '진행 중' : Math.round(event.durationSec / 60) + '분'}</strong><span>{event.cause}</span></span><Badge tone={feedback ? 'green' : 'red'}>{feedback ? '기록 완료' : '미기록'}</Badge><ChevronRight size={16}/></button>; }
+    onSelect?: () => void;
+}) { const { go, data } = useApp(); const feedback = data.feedback.find(f => f.eventId === event.id && f.childId === event.childId); return <button className="cry-row" onClick={() => { onSelect?.(); go('/children/cries/' + event.id); }}><span className={'round-icon ' + (feedback ? 'play' : 'cry')}><Bell size={18}/></span><span className="cry-time">{timeLabel(event.startedAt)}<small>{koreaDate(new Date(event.startedAt)) === today() ? '오늘' : koreaDate(new Date(event.startedAt)).slice(5).replace('-', '.')}</small></span><span className="cry-copy"><strong>울음 {event.durationSec === undefined ? '진행 중' : Math.round(event.durationSec / 60) + '분'}</strong><span>{event.cause}</span></span><Badge tone={feedback ? 'green' : 'red'}>{feedback ? '기록 완료' : '미기록'}</Badge><ChevronRight size={16}/></button>; }
 export function VideoPreview({ large = false }: {
     large?: boolean;
 }) { const { go, data } = useApp(); return <button className={'video-preview ' + (large ? 'large' : '')} onClick={() => go('/monitor')} aria-label="실시간 모니터링 열기">{data.demo ? <><img src="/baby-demo.png" alt="잠든 아기의 시연 이미지. 실제 카메라 영상이 아닙니다."/><span className="video-label"><span />시연 이미지</span><span className="video-badge"><Moon size={14}/> 편안한 낮잠 시간</span><span className="video-bottom"><span><Video size={15}/> 아이의 작은 순간도 함께해요</span><span className="video-expand"><ArrowRight size={18}/></span></span></> : <div className="video-offline"><WifiOff size={32}/><strong>카메라가 연결되지 않았어요</strong><span>연결 상태를 확인해 주세요</span></div>}</button>; }
 export function AlertBanner({ onAlert }: {
     onAlert: () => void;
-}) { const { data } = useApp(); const active = data.alert && data.alert.status !== 'resolved'; return active ? <div className="alert-banner danger"><span className="alert-icon"><CircleAlert size={27}/></span><div><span className="eyebrow">즉시 확인 필요 · 시연 알림</span><h3>{data.child?.name}의 얼굴 가림이 감지됐어요.</h3><p>아이의 얼굴 주변을 직접 확인해 주세요.</p></div><Button variant="yellow" onClick={onAlert}>확인하러 가기 <ArrowRight size={16}/></Button></div> : <div className="alert-banner calm"><Cloud /><div><h3>새로운 감지 알림이 없어요.</h3><p>{data.demo ? data.child?.name + '의 평온한 하루를 함께 살펴요.' : '카메라 미연결 · 현재 상태는 직접 확인해 주세요.'}</p></div><span className="banner-sparkle">✧</span></div>; }
+}) { const { data } = useApp(); const active = data.alert && data.alert.status !== 'resolved'; return active ? <div className="alert-banner danger"><span className="alert-icon"><CircleAlert size={27}/></span><div><span className="eyebrow">즉시 확인 필요 · 시연 알림</span><h3>{getSleepRisk(data.alert!).message}</h3><p>{getSleepRisk(data.alert!).instruction}</p></div><Button variant="yellow" onClick={onAlert}>확인하러 가기 <ArrowRight size={16}/></Button></div> : <div className="alert-banner calm"><Cloud /><div><h3>새로운 감지 알림이 없어요.</h3><p>{data.demo ? data.child?.name + '의 평온한 하루를 함께 살펴요.' : '카메라 미연결 · 현재 상태는 직접 확인해 주세요.'}</p></div><span className="banner-sparkle">✧</span></div>; }
 export function Timeline({ date = today() }: {
     date?: string;
 }) {

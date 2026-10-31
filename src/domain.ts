@@ -42,7 +42,16 @@ export interface Draft {
     response?: CryResponse;
     other?: string;
 }
+export const sleepRisks = {
+    posture: { label: '아기 자세', message: '아기 자세 확인이 필요해요', instruction: '아이의 자세와 호흡을 직접 확인해 주세요.' },
+    face: { label: '얼굴 노출', message: '얼굴 가림 의심 신호가 감지됐어요', instruction: '아이의 얼굴 주변을 직접 확인해 주세요.' },
+    objects: { label: '주변 물체', message: '주변 물체 위험이 의심돼요', instruction: '아이 주변의 물건을 직접 확인해 주세요.' },
+    edge: { label: '가장자리 접근', message: '가장자리 접근이 감지됐어요', instruction: '아이의 위치와 가장자리를 직접 확인해 주세요.' },
+};
+export type SleepRisk = keyof typeof sleepRisks;
+export function getSleepRisk(alert: AlertEvent) { return sleepRisks[alert.kind || 'face'] || sleepRisks.face; }
 export interface AlertEvent {
+    kind?: SleepRisk;
     id: string;
     childId: string;
     severity: Severity;
