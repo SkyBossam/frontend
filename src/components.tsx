@@ -7,7 +7,7 @@ export function Cloud({ className = '', sleepy = true }: {
 }) { return <svg className={'cloud ' + className} viewBox="0 0 150 115" fill="none" aria-hidden="true"><ellipse cx="75" cy="100" rx="47" ry="7" fill="#dcd2f5" opacity=".4"/><path d="M37 84C13 84 12 50 35 47C32 18 66 8 79 28C99 12 123 30 120 49C145 55 140 86 116 85L37 84Z" fill="white" stroke="#9a7eec" strokeWidth="3"/><path d={sleepy ? 'M46 58q6 9 12 0M88 58q6 9 12 0' : 'M51 55v5M94 55v5'} stroke="#8061d4" strokeWidth="3" strokeLinecap="round"/><path d="M69 69q6 6 12 0" stroke="#b69250" strokeWidth="2.5" strokeLinecap="round"/><ellipse cx="44" cy="68" rx="7" ry="3.5" fill="#ffd7d4"/><ellipse cx="105" cy="68" rx="7" ry="3.5" fill="#ffd7d4"/><path d="m128 14 3 7 7 3-7 3-3 7-3-7-7-3 7-3Z" fill="#ffe392"/><path d="m22 16 2 4 4 2-4 2-2 4-2-4-4-2 4-2Z" fill="#ffe392"/></svg>; }
 export function Brand({ small = false }: {
     small?: boolean;
-}) { return <span className={'brand ' + (small ? 'small' : '')} aria-label="아이쿠 aicoo"><img src="/favicon.svg" alt=""/><span>ai<span>coo</span></span></span>; }
+}) { return <span className={'brand ' + (small ? 'small' : '')} aria-label="아이쿠 aicoo"><img src="/mascot-sleep.png" alt=""/><span>ai<span>coo</span></span></span>; }
 export function Button({ children, variant = 'primary', className = '', ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & {
     variant?: 'primary' | 'yellow' | 'secondary' | 'ghost' | 'danger';
 }) { return <button {...props} className={`button ${variant} ${className}`}>{children}</button>; }
