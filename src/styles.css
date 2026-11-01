@@ -157,3 +157,6 @@
 .compact-summary .summary-stats strong{font-size:14px}
 .compact-summary .summary-stats span{font-size:11px}
 @media(max-width:380px){.summary-intro.compact-summary{padding:14px}.history-summary-header{gap:6px}.history-summary-header .button{padding:8px;font-size:11px}.history-summary-header .button svg{display:none}.compact-summary .summary-stats>div{padding:9px;column-gap:7px}}
+
+.cry-copy .cry-care-summary{display:block;margin-top:5px;color:#39785f;font-size:11px;line-height:1.6;font-weight:400;white-space:normal;overflow-wrap:anywhere}
+.cry-row .cry-copy{min-width:0}

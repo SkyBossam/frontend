@@ -1,5 +1,17 @@
 import type { CryEvent, Feedback } from './domain.ts';
 
+/** The response may be attached to an earlier occurrence in the displayed alert. */
+export function cryRecordFeedback(event: CryEvent, cries: CryEvent[], feedback: Feedback[], grouped = false): Feedback | undefined {
+  const ids = new Set([event.id]);
+  if (grouped && event.alertId) {
+    for (const candidate of cries) {
+      if (candidate.childId === event.childId && candidate.sourceId === event.sourceId && candidate.alertId === event.alertId) ids.add(candidate.id);
+    }
+  }
+  return feedback.filter(f => f.childId === event.childId && ids.has(f.eventId))
+    .sort((a, b) => Date.parse(b.updatedAt || b.createdAt) - Date.parse(a.updatedAt || a.createdAt))[0];
+}
+
 /** Group presentation only; physical records and their durations remain intact. */
 export function groupCryRecords(cries: CryEvent[]) {
   const groups = new Map<string, CryEvent[]>();

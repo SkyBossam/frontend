@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { groupCryRecords, pendingCryAlerts } from '../src/cryAlerts.ts';
+import { cryRecordFeedback, groupCryRecords, pendingCryAlerts } from '../src/cryAlerts.ts';
 import { emptyData, saveFeedback, type CryEvent, type Feedback } from '../src/domain.ts';
 import { careChanges, applySavedCare } from '../src/careHistory.ts';
 const event: CryEvent = { id: 'cry', childId: 'child', sourceId: 'camera', startedAt: '2026-11-01T00:00:00Z', cause: '', analysisAvailable: false };
@@ -51,4 +51,16 @@ test('record lists collapse one response group while preserving every physical i
   assert.equal(groupCryRecords([first,{...second,childId:'another-child'}]).length,2);
   assert.equal(groupCryRecords([first,{...second,sourceId:'another-pi'}]).length,2);
   assert.equal(groupCryRecords([{...first,alertId:undefined},{...second,alertId:undefined}]).length,2);
+});
+
+test('grouped care summary finds earlier successful response but isolates other children/devices', () => {
+  const first = { ...event, alertId: 'alert' };
+  const latest = { ...first, id: 'latest' };
+  const success: Feedback = { ...response, response: 'stopped' };
+  assert.equal(cryRecordFeedback(latest, [first, latest], [success], true), success);
+  assert.equal(cryRecordFeedback(latest, [first, latest], [success]), undefined);
+  assert.equal(cryRecordFeedback(latest, [{ ...first, childId: 'other' }], [success], true), undefined);
+  assert.equal(cryRecordFeedback(latest, [{ ...first, sourceId: 'other' }], [success], true), undefined);
+  const updated: Feedback = { ...response, eventId: latest.id, response: 'continues', updatedAt: '2026-11-01T00:03:00Z' };
+  assert.equal(cryRecordFeedback(latest, [first, latest], [success, updated], true), updated);
 });

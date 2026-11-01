@@ -104,3 +104,10 @@ assert.ok(!predictedFlow.includes('이날의 실제 기록'));
 const expandedFlow = renderToStaticMarkup(<AppProvider><DailyFlow expanded/></AppProvider>);
 assert.ok(expandedFlow.includes('이날의 실제 기록'));
 console.log('PASS: daily flow predicts from successful care, merges adjacent time slots and retains actual records in the full page.');
+
+const savedCryList = renderToStaticMarkup(<AppProvider><CryRecordList events={[data.cries.find(e => e.id === 'cry-1')!]}/></AppProvider>);
+assert.ok(savedCryList.includes('안아주고 달래기 · 울음 그침'));
+data.feedback.find(f => f.eventId === 'cry-1')!.response = 'continues';
+const pendingCryList = renderToStaticMarkup(<AppProvider><CryRecordList events={[data.cries.find(e => e.id === 'cry-1')!]}/></AppProvider>);
+assert.ok(!pendingCryList.includes('cry-care-summary'));
+console.log('PASS: cry records show successful care summaries without labelling ongoing crying as success.');
