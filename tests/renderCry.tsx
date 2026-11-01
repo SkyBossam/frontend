@@ -45,7 +45,7 @@ assert.ok(banner.includes('지안이의 울음소리가 감지됐어요.'));
 assert.ok(banner.includes('울음 상세 보기'));assert.ok(banner.includes('alert-banner danger'));
 assert.ok(!banner.includes('현재 아이의 상태를 확인할 수 없어요.'));
 banner = renderToStaticMarkup(<HomeObservationBanner {...bannerProps} cries={[]}/>);
-assert.ok(banner.includes('울음 기록 보기'));
+assert.ok(banner.includes('울음 상세 보기'));assert.ok(!banner.includes('울음 기록 보기'));
 banner = renderToStaticMarkup(<HomeObservationBanner {...bannerProps} items={currentSnapshot(snapshot,0,9000)!.items}/>);
 assert.ok(!banner.includes('울음소리가 감지됐어요.'));assert.ok(banner.includes('현재 아이의 상태를 확인할 수 없어요.'));
 snapshot.items[0].safety.face='immediate';
