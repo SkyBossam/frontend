@@ -167,3 +167,52 @@
 /* Subtle elevation for primary blocks and smaller inset panels. */
 .auth-card,.child-banner,.alert-banner,.tip{box-shadow:var(--shadow)}
 .home-safety-grid>div:not(.posture-risk-highlight),.monitor-side .safety-list>div:not(.posture-risk-highlight),.saved-feedback,.audio-card,.recommendation-card,.daily-prediction-row.predicted,.compact-summary .summary-stats>div{box-shadow:var(--shadow-soft)}
+
+/* Vivid aicoo palette: strong accents with light reading surfaces. */
+:root{--purple:#6633e8;--purple-dark:#4820b7;--lavender:#e9d9ff;--yellow:#ffd447;--danger:#d82550;--green:#087a50;--border:#dfccfa;--muted:#73588b;color:#32194d;background:#f2ebff}
+h1,h2{color:#3b195a}
+.card{border-color:#dfccf4}
+.button.primary{background:linear-gradient(110deg,#7936f2,#5b22d6);color:#fff}
+.button.primary:hover:not(:disabled){background:#5420c8}
+.button.yellow{background:linear-gradient(100deg,#ffe15a,#ffc82e);color:#593700}
+.button.yellow:hover:not(:disabled){background:#ffcf35}
+.button.secondary{background:#eee0ff;color:#5921c2;border-color:#c69aff}
+.button.secondary:hover:not(:disabled){background:#e4caff}
+.button.danger{background:#d82550;color:#fff}
+.button.care-response-cta{background:#5920df;color:#fff}
+.button.care-response-cta:hover:not(:disabled){background:#4514b9}
+.text-button,.pill-button{color:#6525ce}
+.brand{color:#6225d8}.brand>span>span{color:#371854}
+.side-nav button.active{background:#6a2de0;color:#fff}
+.side-nav button.active .nav-active-dot{background:#ffe15a}
+.bottom-nav>button.active{color:#6221db}
+.bottom-nav>button.active:before{background:#7830ef}
+.bottom-nav>button.active>svg{fill:#dec5ff}
+.section-heading h2>svg,.flow-help-button{color:#8540dd}
+.child-banner{background:linear-gradient(105deg,#e5ceff,#f2e3ff);border-color:#d3adfa}
+.child-banner-message>strong{color:#6429ad}.child-banner-message>span{color:#80509f}
+.banner-stars,.profile p svg{color:#a955ee}
+.round-icon,.round-icon.sleep{background:#e2c9ff;color:#6b23de}
+.round-icon.wake,.round-icon.play{background:#ffe591;color:#9c5900}
+.round-icon.cry,.round-icon.soothe{background:#ffcbd7;color:#c3224c}
+.badge,.badge.purple{background:#e3ccff;color:#5d20af}
+.badge.green{background:#acf0d1;color:#08633f}
+.badge.red{background:#ffc2d2;color:#9e1239}
+.badge.yellow{background:#ffe588;color:#755000}
+.alert-banner.calm{background:linear-gradient(110deg,#fff0a3,#ffe584);border-color:#ffdb5b}
+.alert-banner.calm h3,.alert-banner.calm p{color:#765000}
+.alert-banner.danger{background:linear-gradient(115deg,#ffd5dc,#ffbfcf);border-color:#ff91ab}
+.alert-banner.danger h3,.alert-banner.danger p,.alert-banner.danger .eyebrow,.alert-icon{color:#9e1d44}
+.tip{background:linear-gradient(110deg,#fff0af,#ffe58e)}
+.tip strong,.tip p,.tip-icon{color:#795200}
+.sleep-dot{background:#833cf1}.cry-dot,.cry-block{background:#ff4f76}
+.sleep-block{background:linear-gradient(90deg,#a16aff,#7131ed)}
+.toggle.checked,.choice.selected .choice-check{background:#6a25df;border-color:#6a25df}
+.choice.selected{border-color:#aa67f6;background:linear-gradient(100deg,#e7d0ff,#f1e2ff)}
+.choice.selected>strong{color:#6423b1}
+.filters button.active{background:#ead7ff;border-color:#b77df2;color:#5b1cad}
+.home-safety-grid>div:not(.posture-risk-highlight),.monitor-side .safety-list>div:not(.posture-risk-highlight){background:#f0e4ff;border-color:#d9bdf9}
+.daily-prediction-row.predicted{background:#ecd9ff;color:#6929bb}
+.cry-copy .cry-care-summary{color:#087447}
+.auth-shell{background:radial-gradient(ellipse at 15% 50%,#dcc0ff,transparent 60%),#f1e7ff}
+.auth-card{border-color:#d5b4fa}
