@@ -68,6 +68,7 @@ assert.equal((compact.match(/class="badge /g) || []).length,4);
 for (const label of ['아기 자세','얼굴 노출','주변 물체','가장자리 접근']) assert.ok(compact.includes(label));
 assert.ok(compact.includes('즉시 확인'));
 const home = renderToStaticMarkup(<AppProvider><Dashboard onAlert={() => {}}/></AppProvider>);
+assert.ok(!home.includes('완료한 루틴'));assert.ok(!home.includes('놀이·달래기'));assert.ok(!home.includes('play-block'));
 const sleepCard = home.slice(home.indexOf('우리 아이, 지금은'), home.indexOf('최근 울음 기록'));
 assert.ok(sleepCard.includes('home-safety-grid'));
 assert.ok(!sleepCard.includes('울음 관측'));assert.ok(!sleepCard.includes('home-cry-result'));
