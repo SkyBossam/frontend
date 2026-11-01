@@ -141,3 +141,5 @@
 .daily-actual-records{margin-top:24px;border-top:1px solid #eee8f4;padding-top:20px}
 .daily-actual-records h3{font-size:14px;color:#655174}
 @media(max-width:380px){.daily-prediction-row{gap:6px;padding:12px 4px}.daily-prediction-time{width:84px;font-size:11px}}
+
+.summary-stats.sleep-cry-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
