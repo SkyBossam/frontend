@@ -19,7 +19,7 @@ export function HomeObservationBanner({ items, cries, childId, childName, go, re
   const danger = items.some(item => Object.values(item.safety).some(value => value === 'immediate' || value === 'caution'));
   const observed = items.some(item => item.status.video.available);
   const target = crying && childId && crying.status.audio.observedAt
-    ? { childId, deviceId: crying.deviceId, observedAt: crying.status.audio.observedAt } : null;
+    ? { childId, deviceId: crying.deviceId, observedAt: crying.status.audio.observedAt, recordId: crying.cryEventId } : null;
   useEffect(() => {
     if (!requested) return;
     if (requested.childId !== childId) { setRequested(null); setFailed(false); return; }
@@ -38,6 +38,7 @@ export function HomeObservationBanner({ items, cries, childId, childName, go, re
   const openDetail = () => {
     const observation = requested || target;
     if (!observation || observation.childId !== childId) return;
+    if (observation.recordId) { setRequested(null); setFailed(false); go('/children/cries/' + encodeURIComponent(observation.recordId)); return; }
     const record = findObservedCry(cries, observation);
     if (record) { setRequested(null); setFailed(false); go('/children/cries/' + record.id); }
     else { setFailed(false); setRequested({ ...observation }); }
@@ -52,7 +53,9 @@ export function HomeObservationBanner({ items, cries, childId, childName, go, re
       {crying && danger && <p>카메라에서도 확인이 필요한 상태를 관측했어요. 관측 결과도 함께 확인해 주세요.</p>}
       {requested && <p>{failed ? '해당 울음 기록을 아직 불러오지 못했어요. 다시 시도해 주세요.' : '감지된 울음 기록을 불러오고 있어요. 준비되면 상세 화면으로 이동해요.'}</p>}
     </div>
-    {(!crying || danger) && <Button variant="yellow" onClick={() => go('/monitor')}>관측 결과 보기</Button>}
-    {(crying || requested) && <Button variant="yellow" disabled={!!requested && !failed || !requested && !target} onClick={openDetail}>{requested && !failed ? '울음 상세 불러오는 중…' : failed ? '울음 상세 다시 보기' : '울음 상세 보기'} <ArrowRight size={16}/></Button>}
+    <div className="observation-banner-actions">{(!crying || danger) && <Button variant="yellow" onClick={() => go('/monitor')}>관측 결과 보기</Button>}
+    {(crying || requested) && <Button variant="yellow" disabled={!!requested && !failed || !requested && !target} onClick={openDetail}>{requested && !failed ? '기록 확인 중…' : failed ? '울음 상세 다시 보기' : '울음 상세 보기'} <ArrowRight size={16}/></Button>}
+    {requested && <Button variant="ghost" onClick={() => { setRequested(null); setFailed(false); }}>취소</Button>}
+    </div>
   </div>;
 }

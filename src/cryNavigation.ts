@@ -1,9 +1,10 @@
 import type { CryEvent } from './domain.ts';
 
-export interface ObservedCry { childId: string; deviceId: string; observedAt: string }
+export interface ObservedCry { childId: string; deviceId: string; observedAt: string; recordId?: string | null }
 
 /** Resolve the clicked observation, even if it has ended while history was loading. */
 export function findObservedCry(cries: CryEvent[], target: ObservedCry): CryEvent | undefined {
+  if (target.recordId) return cries.find(event => event.id === target.recordId && event.childId === target.childId && event.sourceId === target.deviceId);
   const at = Date.parse(target.observedAt);
   if (!Number.isFinite(at)) return undefined;
   return cries.filter(event => {

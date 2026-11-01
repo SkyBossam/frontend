@@ -6,6 +6,7 @@ export interface SkyDevice {
   deviceId: string; name: string; connected: boolean;
   reportState?: 'awaiting_sender' | 'awaiting_model' | 'offline' | 'input_unavailable' | 'receiving';
   lastReportAt?: string | null;
+  cryEventId?: string | null;
   camera?: { available: boolean; capturedAt: string | null; width: number | null; height: number | null };
   status: {
     observedAt: string;

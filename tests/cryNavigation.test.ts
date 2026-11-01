@@ -36,3 +36,11 @@ test('does not treat a completed interval as ongoing when only duration is prese
 test('invalid observation timestamps do not select a record', () => {
   assert.equal(findObservedCry([event()], { ...target, observedAt: 'invalid' }), undefined);
 });
+
+test('server record ID resolves the exact occurrence despite later status changes', () => {
+  const linked = { ...target, recordId: 'clicked-cry' };
+  assert.equal(findObservedCry([event({lastObservedAt: time(10), endedAt: time(15)})], linked)?.id, 'clicked-cry');
+  assert.equal(findObservedCry([event({id: 'unrelated'})], linked), undefined);
+  assert.equal(findObservedCry([event({childId: 'other'})], linked), undefined);
+  assert.equal(findObservedCry([event({sourceId: 'other'})], linked), undefined);
+});

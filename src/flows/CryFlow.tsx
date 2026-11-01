@@ -60,9 +60,20 @@ export function CryFlow({ Page }: {
     Page?: ComponentType;
 }) {
     const state = useCryFlowState();
-    const { go, recordsLoading } = useApp();
+    const { go, path, recordsLoading, recordsError, refreshRecords } = useApp();
+    const [lookupExpired, setLookupExpired] = useState(false);
+    const [retry, setRetry] = useState(0);
+    const missing = !state;
+    useEffect(() => {
+        setLookupExpired(false);
+        if (!missing) return;
+        void refreshRecords();
+        const interval = setInterval(() => void refreshRecords(), 2000);
+        const timeout = setTimeout(() => { clearInterval(interval); setLookupExpired(true); }, 15000);
+        return () => { clearInterval(interval); clearTimeout(timeout); };
+    }, [path, missing, refreshRecords, retry]);
     if (!state)
-        return <div className="narrow-page"><PageHeader title="울음 기록" onBack={() => go('/children/cries')}/><EmptyState title={recordsLoading ? '기록을 불러오고 있어요' : '기록을 찾을 수 없어요'} description="아이의 울음 목록에서 기록을 다시 선택해 주세요." action={<Button onClick={() => go('/children/cries')}>울음 목록으로</Button>}/></div>;
+        return <div className="narrow-page"><PageHeader title="울음 기록" onBack={() => go('/children/cries')}/><EmptyState title={!lookupExpired && !recordsError ? '울음 상세를 불러오고 있어요' : '울음 기록을 불러오지 못했어요'} description={recordsError || (lookupExpired ? '서버에 해당 기록이 있는지 다시 확인해 주세요.' : '감지된 기록을 서버에서 확인하고 있어요.')} action={<><Button disabled={recordsLoading} onClick={() => setRetry(value => value + 1)}>다시 불러오기</Button><Button variant="ghost" onClick={() => go('/children/cries')}>울음 목록으로</Button></>}/></div>;
     const { title, back, stage, event } = state;
     return <CryFlowContext.Provider value={state}><div className="narrow-page flow-page"><PageHeader title={title} onBack={back} action={stage !== 'complete' ? <Badge>{timeLabel(event.startedAt)} 감지</Badge> : undefined}/>{['recommendations', 'actions', 'response'].includes(stage) && <Steps current={stage === 'recommendations' ? 0 : stage === 'actions' ? 1 : 2} labels={['추천 확인', '시도 행동', '아이 반응']}/>}{Page ? <Page /> : <EmptyState title="준비 중인 화면이에요"/>}</div></CryFlowContext.Provider>;
 }
