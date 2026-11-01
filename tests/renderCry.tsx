@@ -1,3 +1,4 @@
+import { SafetyObservationPopup } from '../src/components/RiskNotification';
 import { ActionLog } from '../src/pages/ActionLog';
 import { Response } from '../src/pages/Response';
 import { CryRecordList } from '../src/components/CryRecordList';
@@ -113,3 +114,15 @@ data.feedback.find(f => f.eventId === 'cry-1')!.response = 'continues';
 const pendingCryList = renderToStaticMarkup(<AppProvider><CryRecordList events={[data.cries.find(e => e.id === 'cry-1')!]}/></AppProvider>);
 assert.ok(!pendingCryList.includes('cry-care-summary'));
 console.log('PASS: cry records show successful care summaries without labelling ongoing crying as success.');
+
+const safetyPopup = renderToStaticMarkup(<SafetyObservationPopup childName="지안이" notices={[
+  { key: 'posture', deviceName: '아이쿠', field: 'posture', level: 'immediate' },
+  { key: 'face', deviceName: '아이쿠', field: 'face', level: 'unknown' },
+]} onClose={() => {}} onMonitor={() => {}}/>);
+for (const text of ['아이 상태 확인 알림', '아기 자세', '얼굴 노출', '현재 관측으로 확인할 수 없어요.', '관측 결과 확인하기', '확인했어요']) assert.ok(safetyPopup.includes(text));
+const unknownPopup = renderToStaticMarkup(<SafetyObservationPopup childName="지안이" notices={[
+  { key: 'face', deviceName: '아이쿠', field: 'face', level: 'unknown' },
+]} onClose={() => {}} onMonitor={() => {}}/>);
+assert.ok(unknownPopup.includes('관측 확인 불가'));
+assert.ok(!unknownPopup.includes('얼굴 가림 의심 신호'));
+console.log('PASS: safety popups show posture and face, distinguish unavailable observations from detected risk.');
