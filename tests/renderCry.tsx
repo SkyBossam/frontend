@@ -13,7 +13,8 @@ import assert from 'node:assert/strict';
 import { AppProvider } from '../src/context';
 import { CryFlow } from '../src/flows/CryFlow';
 import { CryDetail } from '../src/pages/CryDetail';
-import { demoData } from '../src/domain';
+import { demoData, koreaDate } from '../src/domain';
+import { DailyFlow } from '../src/components/DailyFlow';
 const location = { pathname: '/children/cries/cry-1', search: '', hash: '', href: 'http://localhost:5173/children/cries/cry-1' };
 const data = demoData();
 Object.defineProperty(globalThis, 'window', { value: { location }, configurable: true });
@@ -81,3 +82,25 @@ location.pathname = '/children/cries/cry-1/response';
 carePage = renderToStaticMarkup(<AppProvider><CryFlow Page={Response}/></AppProvider>);
 assert.ok(carePage.includes('아이가 울음을 그쳤나요?'));assert.ok(carePage.includes('type="radio"'));
 console.log('PASS: actual care and child response render as separate routed pages.');
+
+// The home flow is a prediction; expanded flow retains editable actual records.
+for (const offset of [1, 2]) {
+  const day = koreaDate(new Date(Date.now() - offset * 86400000));
+  for (const time of ['13:00', '13:30', '14:00']) {
+    const id = `prediction-${offset}-${time}`;
+    const at = `${day}T${time}:00+09:00`;
+    data.cries.push({ id, childId: 'child-demo', startedAt: at, cause: '', analysisAvailable: false });
+    data.feedback.push({ eventId: id, childId: 'child-demo', actions: ['sleep'], response: 'stopped', note: '', createdAt: at });
+  }
+}
+const predictedFlow = renderToStaticMarkup(<AppProvider><DailyFlow/></AppProvider>);
+assert.ok(predictedFlow.includes('13:00–14:30'));
+assert.ok(predictedFlow.includes('수면 환경 조정하기 예상'));
+assert.ok(predictedFlow.includes('울음 그침 6건'));
+assert.ok(predictedFlow.includes('예측할 기록 부족'));
+assert.ok(!predictedFlow.includes('13:30–14:00'));
+assert.ok(!predictedFlow.includes('안내할 예정'));
+assert.ok(!predictedFlow.includes('이날의 실제 기록'));
+const expandedFlow = renderToStaticMarkup(<AppProvider><DailyFlow expanded/></AppProvider>);
+assert.ok(expandedFlow.includes('이날의 실제 기록'));
+console.log('PASS: daily flow predicts from successful care, merges adjacent time slots and retains actual records in the full page.');

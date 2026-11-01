@@ -122,3 +122,22 @@
 .monitor-side .safety-list>div>span:first-child svg{width:15px;height:15px;flex-shrink:0}
 .monitor-side .safety-list .badge{font-size:11px;white-space:normal}
 .monitor-side .safety-list>div.posture-risk-highlight{background:#fff0ee;border-color:#e9a49e}
+
+.daily-prediction-intro{display:flex;align-items:center;gap:10px;margin-top:14px}
+.daily-prediction-intro p,.daily-prediction-empty{font-size:12px;line-height:1.7;color:#82718f}
+.daily-prediction-intro .badge{flex-shrink:0}
+.daily-prediction-empty{padding:12px;margin-top:12px;border-radius:12px;background:#faf6ff}
+.daily-prediction-list{list-style:none;padding:0;margin:0}
+.daily-prediction-row{display:flex;align-items:center;gap:10px;padding:14px 10px;border-bottom:1px solid #eee8f4;color:#8962ba}
+.daily-prediction-row:last-child{border-bottom:0}
+.daily-prediction-row.predicted{background:#faf6ff;border-radius:10px}
+.daily-prediction-row>svg{flex-shrink:0}
+.daily-prediction-row>div{min-width:0}
+.daily-prediction-row strong{font-size:13px;font-weight:600;line-height:1.6;overflow-wrap:anywhere}
+.daily-prediction-row small{display:block;margin-top:4px;font-size:11px;color:#82718f}
+.daily-prediction-time{flex-shrink:0;width:94px;font-size:12px;font-variant-numeric:tabular-nums;color:#766583}
+.daily-prediction-row.unknown{color:#91839c}
+.daily-prediction-row.unknown strong{font-weight:400;font-size:12px}
+.daily-actual-records{margin-top:24px;border-top:1px solid #eee8f4;padding-top:20px}
+.daily-actual-records h3{font-size:14px;color:#655174}
+@media(max-width:380px){.daily-prediction-row{gap:6px;padding:12px 4px}.daily-prediction-time{width:84px;font-size:11px}}
