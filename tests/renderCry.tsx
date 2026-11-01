@@ -32,6 +32,7 @@ console.log('PASS: cry detail renders analysis and recommendations before the ca
 const real = renderToStaticMarkup(<CryAnalysis event={{id:'real', childId:'child', startedAt:'2026-11-01T00:00:00Z', cause:'원인 미분류', analysisAvailable:false, audioAnalysis:{observedAt:'2026-11-01T00:00:00Z',cryDetected:true,babyCryScore:0.4,cryingScore:0.1}}}/>);
 assert.ok(real.includes('아기 울음 감지'));assert.ok(real.includes('원인 미분류'));assert.ok(real.includes('0.40'));
 const monitor = renderToStaticMarkup(<AppProvider><Monitor onAlert={() => {}}/></AppProvider>);
+assert.ok(monitor.includes('모니터링 감지 안내'));assert.ok(!monitor.includes('화면에 감지 알림이 없어도'));
 assert.ok(!monitor.includes('실제로 한 돌봄 알려주기'));assert.ok(!monitor.includes('보호자 기록을 모으고'));
 console.log('PASS: real detection is labelled without invented causes; monitoring has no learning-data collector.');
 

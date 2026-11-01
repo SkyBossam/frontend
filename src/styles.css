@@ -112,3 +112,13 @@
 
 .button.care-response-cta { background: #6941c6; color: #fff; }
 .button.care-response-cta:hover:not(:disabled) { background: #5731ad; }
+
+.connection-status{position:relative}
+.monitor-help{flex-shrink:0}
+.monitor-help-tooltip{position:absolute;z-index:70;top:100%;right:0;width:260px;max-width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid #e7dcef;border-radius:12px;background:#fff;box-shadow:0 6px 24px #49306020;color:#6e5a80;font-size:12px;line-height:1.8;overflow-wrap:anywhere}
+.monitor-side .safety-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.monitor-side .safety-list>div,.monitor-side .safety-list>div:last-child{display:flex;flex-direction:column;align-items:flex-start;min-width:0;gap:8px;padding:12px;border:1px solid #eee8f4;border-radius:12px;background:#fcfaff}
+.monitor-side .safety-list>div>span:first-child{font-size:12px;gap:6px}
+.monitor-side .safety-list>div>span:first-child svg{width:15px;height:15px;flex-shrink:0}
+.monitor-side .safety-list .badge{font-size:11px;white-space:normal}
+.monitor-side .safety-list>div.posture-risk-highlight{background:#fff0ee;border-color:#e9a49e}
