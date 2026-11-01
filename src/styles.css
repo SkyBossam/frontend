@@ -167,3 +167,8 @@
 /* Subtle elevation for primary blocks and smaller inset panels. */
 .auth-card,.child-banner,.alert-banner,.tip{box-shadow:var(--shadow)}
 .home-safety-grid>div:not(.posture-risk-highlight),.monitor-side .safety-list>div:not(.posture-risk-highlight),.saved-feedback,.audio-card,.recommendation-card,.daily-prediction-row.predicted,.compact-summary .summary-stats>div{box-shadow:var(--shadow-soft)}
+
+/* Give the bell, timestamp and record text distinct spacing. */
+.cry-row>.round-icon{margin-right:8px}
+.cry-row>.cry-time{min-width:42px;flex-shrink:0;margin-right:10px}
+@media(max-width:760px){.cry-row>.round-icon{margin-right:4px}.cry-row>.cry-time{min-width:38px;margin-right:6px}}
