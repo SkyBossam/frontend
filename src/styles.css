@@ -172,3 +172,5 @@
 .cry-row>.round-icon{margin-right:8px}
 .cry-row>.cry-time{min-width:42px;flex-shrink:0;margin-right:10px}
 @media(max-width:760px){.cry-row>.round-icon{margin-right:4px}.cry-row>.cry-time{min-width:38px;margin-right:6px}}
+
+.cry-row>.cry-time{align-items:center;text-align:center}
