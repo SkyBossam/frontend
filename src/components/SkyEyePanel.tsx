@@ -19,7 +19,6 @@ export function SkyEyeSafety({ compact = false }: { compact?: boolean }) {
   const items = sky.snapshot?.items || [];
   if (compact) return <CompactSleepSafety items={items}/>;
   return <>{(items.length ? items : [null]).map((device, index) => <div key={device?.deviceId || index}>
-    {device && <p className="section-description">{device.name} · {device.status.video.available ? '영상 분석 수신 중' : '영상 분석 확인 불가'}</p>}
     <div className="safety-list">{safetyItems.map(({ key, label }) => {
       const state = device?.safety[key] || 'unknown';
       return <div key={key} className={key === 'posture' && (state === 'immediate' || state === 'caution') ? 'posture-risk-highlight' : undefined}><span><ShieldCheck size={17}/>{label}</span><Badge tone={safetyTones[state]}>{safetyLabels[state]}</Badge></div>;
