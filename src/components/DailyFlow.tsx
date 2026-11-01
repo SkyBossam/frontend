@@ -81,7 +81,7 @@ export function DailyFlow({ expanded = false, selectedDate, onSleepSelect }: { e
             <div className="flow-help" onMouseEnter={() => setShowHelp(true)} onMouseLeave={() => setShowHelp(false)}>
                 <button ref={helpButton} type="button" className="flow-help-button" aria-label="하루 흐름 설명" aria-describedby={showHelp ? helpId : undefined} aria-expanded={showHelp} onClick={() => setShowHelp(true)} onFocus={() => setShowHelp(true)} onBlur={() => setShowHelp(false)} onKeyDown={e => { if (e.key === 'Escape') setShowHelp(false); }}><CircleHelp size={16}/></button>
                 {showHelp && createPortal(<div ref={tooltip} style={helpPosition} className="flow-tooltip" role="tooltip" id={helpId}>최근 7일의 울음 감지 시간과 울음이 그친 돌봄 결과를 30분씩 살펴봐요. 같은 행동이 최소 2일 이상 기록된 시간대에서 가장 많은 날짜에 도움이 된 행동을 표시해요. 동률이면 예상을 보류하고, 연속된 같은 행동은 합쳐서 보여줘요. 실제로 필요한 돌봄과 다를 수 있어요.</div>, document.body)}
-            </div></div>{!expanded && <button className="text-button" onClick={() => go('/children/daily-flow')}>전체 보기<ChevronRight size={15}/></button>}</div>
+            </div></div></div>
         <p className="section-description">최근 7일 · {prediction.fromDate} ~ {prediction.throughDate}</p>
         <div className="daily-prediction-intro"><Badge>예상 돌봄</Badge><p>울음이 그친 돌봄 결과를 바탕으로 시간대별 행동을 예상해요.</p></div>
         {data.demo && <p className="section-description">체험용 기록으로 만든 예상이에요.</p>}
