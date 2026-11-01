@@ -160,3 +160,6 @@
 
 .cry-copy .cry-care-summary{display:block;margin-top:5px;color:#39785f;font-size:11px;line-height:1.6;font-weight:400;white-space:normal;overflow-wrap:anywhere}
 .cry-row .cry-copy{min-width:0}
+
+.day-card .stat-row{justify-content:flex-start;gap:clamp(24px,4vw,40px);text-align:left;flex-wrap:wrap}
+.day-card .stat-row>div{justify-content:flex-start}
